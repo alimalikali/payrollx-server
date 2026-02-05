@@ -19,15 +19,32 @@ const config = {
 
   // JWT
   jwt: {
-    accessSecret: process.env.JWT_ACCESS_SECRET || 'default_access_secret',
-    refreshSecret: process.env.JWT_REFRESH_SECRET || 'default_refresh_secret',
-    accessExpiry: process.env.JWT_ACCESS_EXPIRY || '15m',
-    refreshExpiry: process.env.JWT_REFRESH_EXPIRY || '7d',
+    accessSecret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'default_access_secret',
+    refreshSecret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET || 'default_refresh_secret',
+    accessExpiry: process.env.JWT_ACCESS_EXPIRY || process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    refreshExpiry: process.env.JWT_REFRESH_EXPIRY || process.env.JWT_REFRESH_EXPIRES_IN || '7d',
+    // Backwards-compatible aliases used by older utilities/tests
+    secret: process.env.JWT_ACCESS_SECRET || process.env.JWT_SECRET || 'default_access_secret',
+    accessExpiresIn: process.env.JWT_ACCESS_EXPIRY || process.env.JWT_ACCESS_EXPIRES_IN || '15m',
+    refreshExpiresIn: process.env.JWT_REFRESH_EXPIRY || process.env.JWT_REFRESH_EXPIRES_IN || '7d',
     refreshExpiryDays: 7,
   },
 
   // CORS
-  clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
+  clientUrls: (
+    process.env.CLIENT_URLS ||
+    (process.env.CLIENT_URL ? `${process.env.CLIENT_URL},http://localhost:8080` : 'http://localhost:5173,http://localhost:8080')
+  )
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean),
+  clientUrl: (
+    process.env.CLIENT_URLS ||
+    (process.env.CLIENT_URL ? `${process.env.CLIENT_URL},http://localhost:8080` : 'http://localhost:5173,http://localhost:8080')
+  )
+    .split(',')
+    .map((url) => url.trim())
+    .filter(Boolean)[0] || 'http://localhost:5173',
 
   // Rate Limiting
   rateLimit: {

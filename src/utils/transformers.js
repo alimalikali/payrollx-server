@@ -3,46 +3,21 @@
  * Converts between snake_case (database) and camelCase (frontend)
  */
 
-/**
- * Convert snake_case string to camelCase
- * @param {string} str - snake_case string
- * @returns {string} camelCase string
- */
-const snakeToCamel = (str) => {
-  return str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-};
+const snakeToCamel = (str) => str.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 
-/**
- * Convert camelCase string to snake_case
- * @param {string} str - camelCase string
- * @returns {string} snake_case string
- */
-const camelToSnake = (str) => {
-  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-};
+const camelToSnake = (str) => str
+  .replace(/([a-z0-9])([A-Z])/g, '$1_$2')
+  .replace(/([A-Z]+)([A-Z][a-z])/g, '$1_$2')
+  .toLowerCase();
 
-/**
- * Transform object keys from snake_case to camelCase (recursive)
- * @param {any} obj - Object to transform
- * @returns {any} Transformed object
- */
 const toCamelCase = (obj) => {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(toCamelCase);
-  }
-
-  if (obj instanceof Date) {
-    return obj;
-  }
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(toCamelCase);
+  if (obj instanceof Date) return obj;
 
   if (typeof obj === 'object') {
     return Object.keys(obj).reduce((acc, key) => {
-      const camelKey = snakeToCamel(key);
-      acc[camelKey] = toCamelCase(obj[key]);
+      acc[snakeToCamel(key)] = toCamelCase(obj[key]);
       return acc;
     }, {});
   }
@@ -50,28 +25,14 @@ const toCamelCase = (obj) => {
   return obj;
 };
 
-/**
- * Transform object keys from camelCase to snake_case (recursive)
- * @param {any} obj - Object to transform
- * @returns {any} Transformed object
- */
 const toSnakeCase = (obj) => {
-  if (obj === null || obj === undefined) {
-    return obj;
-  }
-
-  if (Array.isArray(obj)) {
-    return obj.map(toSnakeCase);
-  }
-
-  if (obj instanceof Date) {
-    return obj;
-  }
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(toSnakeCase);
+  if (obj instanceof Date) return obj;
 
   if (typeof obj === 'object') {
     return Object.keys(obj).reduce((acc, key) => {
-      const snakeKey = camelToSnake(key);
-      acc[snakeKey] = toSnakeCase(obj[key]);
+      acc[camelToSnake(key)] = toSnakeCase(obj[key]);
       return acc;
     }, {});
   }
@@ -79,131 +40,211 @@ const toSnakeCase = (obj) => {
   return obj;
 };
 
-/**
- * Transform employee database record to frontend format
- * @param {object} dbRecord - Database employee record with joined data
- * @returns {object} Frontend-formatted employee
- */
+const parseNumber = (value, fallback = 0) => {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+
+const getNameParts = (record) => {
+  const firstName = record.first_name || record.firstName || '';
+  const lastName = record.last_name || record.lastName || '';
+
+  if (firstName || lastName) {
+    return { firstName, lastName };
+  }
+
+  const fullName = record.name || record.employee_name || '';
+  const [first = '', ...rest] = fullName.split(' ');
+  return { firstName: first, lastName: rest.join(' ') };
+};
+
 const transformEmployee = (dbRecord) => {
   if (!dbRecord) return null;
 
+  const { firstName, lastName } = getNameParts(dbRecord);
+  const employeeCode = dbRecord.employee_id || dbRecord.employee_code || dbRecord.code || null;
+  const basicSalary = parseNumber(dbRecord.basic_salary);
+  const grossSalary = parseNumber(dbRecord.gross_salary);
+
   return {
     id: dbRecord.id,
-    code: dbRecord.employee_code,
-    name: `${dbRecord.first_name} ${dbRecord.last_name}`,
+    employeeId: employeeCode,
+    code: employeeCode,
+    firstName,
+    lastName,
+    name: `${firstName} ${lastName}`.trim(),
     email: dbRecord.email,
-    phone: dbRecord.phone || '',
-    avatar: dbRecord.avatar_url || null,
-    department: dbRecord.department_name || dbRecord.department,
-    designation: dbRecord.designation,
+    phone: dbRecord.phone || null,
+    cnic: dbRecord.cnic || null,
+    dateOfBirth: formatDate(dbRecord.date_of_birth),
+    gender: dbRecord.gender || null,
+    maritalStatus: dbRecord.marital_status || null,
+    address: dbRecord.address || null,
+    city: dbRecord.city || null,
+    departmentId: dbRecord.department_id || null,
+    departmentName: dbRecord.department_name || null,
+    departmentCode: dbRecord.department_code || null,
+    department: dbRecord.department_name || dbRecord.department || null,
+    designation: dbRecord.designation || null,
+    employmentType: dbRecord.employment_type || 'full_time',
+    joiningDate: formatDate(dbRecord.joining_date || dbRecord.joined_date),
+    joinedDate: formatDate(dbRecord.joining_date || dbRecord.joined_date),
+    endDate: formatDate(dbRecord.end_date),
+    reportingTo: dbRecord.reporting_to || dbRecord.manager_id || null,
+    managerName: dbRecord.manager_first_name
+      ? `${dbRecord.manager_first_name} ${dbRecord.manager_last_name || ''}`.trim()
+      : null,
+    bankName: dbRecord.bank_name || null,
+    bankAccountNumber: dbRecord.bank_account_number || null,
+    bankBranch: dbRecord.bank_branch || null,
+    ntnNumber: dbRecord.ntn_number || null,
+    taxFilingStatus: dbRecord.tax_filing_status || 'non_filer',
     status: dbRecord.status,
-    joinedDate: dbRecord.joined_date ? formatDate(dbRecord.joined_date) : null,
+    profileImage: dbRecord.profile_image || dbRecord.avatar_url || null,
+    avatar: dbRecord.profile_image || dbRecord.avatar_url || null,
+    basicSalary,
+    grossSalary,
     salary: {
-      basic: parseFloat(dbRecord.basic_salary) || 0,
-      hra: parseFloat(dbRecord.hra) || 0,
-      transport: parseFloat(dbRecord.transport_allowance) || 0,
-      medical: parseFloat(dbRecord.medical_allowance) || 0,
-      overtime: parseFloat(dbRecord.overtime_rate) || 0,
+      basic: basicSalary,
+      hra: parseNumber(dbRecord.housing_allowance || dbRecord.hra),
+      transport: parseNumber(dbRecord.transport_allowance),
+      medical: parseNumber(dbRecord.medical_allowance),
+      overtime: parseNumber(dbRecord.overtime_rate),
     },
     leaveBalance: {
-      annual: (dbRecord.annual_leaves || 0) - (dbRecord.annual_used || 0),
-      sick: (dbRecord.sick_leaves || 0) - (dbRecord.sick_used || 0),
-      casual: (dbRecord.casual_leaves || 0) - (dbRecord.casual_used || 0),
+      annual: parseNumber(dbRecord.annual_leaves) - parseNumber(dbRecord.annual_used),
+      sick: parseNumber(dbRecord.sick_leaves) - parseNumber(dbRecord.sick_used),
+      casual: parseNumber(dbRecord.casual_leaves) - parseNumber(dbRecord.casual_used),
     },
+    createdAt: dbRecord.created_at,
+    updatedAt: dbRecord.updated_at,
   };
 };
 
-/**
- * Transform attendance database record to frontend format
- * @param {object} dbRecord - Database attendance record
- * @returns {object} Frontend-formatted attendance
- */
+const transformEmployeeList = (records = []) => records.map(transformEmployee);
+
+const formatTime = (value) => {
+  if (!value) return null;
+
+  if (typeof value === 'string') {
+    const withSeconds = value.match(/^(\d{2}:\d{2}:\d{2})$/);
+    if (withSeconds) return withSeconds[1];
+
+    const withoutSeconds = value.match(/^(\d{2}:\d{2})$/);
+    if (withoutSeconds) return withoutSeconds[1];
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+};
+
 const transformAttendance = (dbRecord) => {
   if (!dbRecord) return null;
 
+  const { firstName, lastName } = getNameParts(dbRecord);
+
   return {
     id: dbRecord.id,
     employeeId: dbRecord.employee_id,
+    employeeName: (dbRecord.employee_name || `${firstName} ${lastName}`).trim() || null,
+    employeeCode: dbRecord.emp_code || dbRecord.employee_code || null,
+    departmentName: dbRecord.department_name || null,
     date: formatDate(dbRecord.date),
-    checkIn: dbRecord.check_in ? formatTime(dbRecord.check_in) : null,
-    checkOut: dbRecord.check_out ? formatTime(dbRecord.check_out) : null,
+    checkIn: formatTime(dbRecord.check_in),
+    checkOut: formatTime(dbRecord.check_out),
+    workingHours: parseNumber(dbRecord.working_hours || dbRecord.hours_worked),
+    hoursWorked: parseNumber(dbRecord.working_hours || dbRecord.hours_worked),
+    overtimeHours: parseNumber(dbRecord.overtime_hours),
     status: dbRecord.status,
-    hoursWorked: parseFloat(dbRecord.hours_worked) || 0,
+    notes: dbRecord.notes || null,
   };
 };
 
-/**
- * Transform leave request database record to frontend format
- * @param {object} dbRecord - Database leave record
- * @returns {object} Frontend-formatted leave request
- */
+const transformAttendanceList = (records = []) => records.map(transformAttendance);
+
 const transformLeaveRequest = (dbRecord) => {
   if (!dbRecord) return null;
 
+  const { firstName, lastName } = getNameParts(dbRecord);
+  const employeeName = (dbRecord.employee_name || `${firstName} ${lastName}`).trim();
+
   return {
     id: dbRecord.id,
     employeeId: dbRecord.employee_id,
-    employeeName: dbRecord.employee_name || `${dbRecord.first_name} ${dbRecord.last_name}`,
-    type: dbRecord.leave_type,
+    employeeName,
+    employeeCode: dbRecord.emp_code || null,
+    departmentName: dbRecord.department_name || null,
+    leaveTypeId: dbRecord.leave_type_id,
+    leaveTypeName: dbRecord.leave_type_name || dbRecord.leave_type || null,
+    leaveTypeCode: dbRecord.leave_type_code || null,
+    isPaid: dbRecord.is_paid,
     startDate: formatDate(dbRecord.start_date),
     endDate: formatDate(dbRecord.end_date),
-    days: dbRecord.days_count,
+    totalDays: parseNumber(dbRecord.total_days || dbRecord.days_count),
+    days: parseNumber(dbRecord.total_days || dbRecord.days_count),
+    isHalfDay: !!dbRecord.is_half_day,
+    halfDayType: dbRecord.half_day_type || null,
     reason: dbRecord.reason,
+    attachmentUrl: dbRecord.attachment_url || null,
     status: dbRecord.status,
-    appliedOn: formatDate(dbRecord.applied_on || dbRecord.created_at),
+    approvedBy: dbRecord.approved_by || null,
+    approvedByEmail: dbRecord.approved_by_email || null,
+    approvedAt: dbRecord.approved_at,
+    rejectionReason: dbRecord.rejection_reason || null,
+    type: dbRecord.leave_type_code || dbRecord.leave_type || dbRecord.leave_type_name || 'leave',
+    appliedOn: formatDate(dbRecord.created_at),
+    createdAt: dbRecord.created_at,
   };
 };
 
-/**
- * Transform payroll record to frontend format
- * @param {object} dbRecord - Database payroll/payslip record
- * @returns {object} Frontend-formatted payroll record
- */
+const transformLeaveRequestList = (records = []) => records.map(transformLeaveRequest);
+
 const transformPayrollRecord = (dbRecord) => {
   if (!dbRecord) return null;
 
+  const { firstName, lastName } = getNameParts(dbRecord);
+
   return {
     id: dbRecord.id,
     employeeId: dbRecord.employee_id,
-    employeeName: dbRecord.employee_name || `${dbRecord.first_name} ${dbRecord.last_name}`,
+    employeeName: (dbRecord.employee_name || `${firstName} ${lastName}`).trim() || null,
     month: dbRecord.month,
-    basic: parseFloat(dbRecord.basic_salary) || 0,
-    allowances: parseFloat(dbRecord.hra || 0) +
-                parseFloat(dbRecord.transport_allowance || 0) +
-                parseFloat(dbRecord.medical_allowance || 0) +
-                parseFloat(dbRecord.overtime_pay || 0),
-    deductions: parseFloat(dbRecord.total_deductions) || 0,
-    tax: parseFloat(dbRecord.income_tax) || 0,
-    netPay: parseFloat(dbRecord.net_salary) || 0,
+    basic: parseNumber(dbRecord.basic_salary),
+    allowances:
+      parseNumber(dbRecord.hra) +
+      parseNumber(dbRecord.transport_allowance) +
+      parseNumber(dbRecord.medical_allowance) +
+      parseNumber(dbRecord.overtime_pay),
+    deductions: parseNumber(dbRecord.total_deductions),
+    tax: parseNumber(dbRecord.income_tax),
+    netPay: parseNumber(dbRecord.net_salary),
     status: dbRecord.status,
   };
 };
 
-/**
- * Transform AI alert to frontend format
- * @param {object} dbRecord - Database AI alert record
- * @returns {object} Frontend-formatted alert
- */
 const transformAlert = (dbRecord) => {
   if (!dbRecord) return null;
+
+  const { firstName, lastName } = getNameParts(dbRecord);
 
   return {
     id: dbRecord.id,
     severity: dbRecord.severity,
     title: dbRecord.title,
     employeeId: dbRecord.employee_id,
-    employeeName: dbRecord.employee_name || `${dbRecord.first_name} ${dbRecord.last_name}`,
+    employeeName: (dbRecord.employee_name || `${firstName} ${lastName}`).trim() || null,
     description: dbRecord.description,
     timestamp: formatDateTime(dbRecord.generated_at || dbRecord.created_at),
-    reviewed: dbRecord.is_reviewed || false,
+    reviewed: !!dbRecord.is_reviewed,
   };
 };
 
-/**
- * Transform salary recommendation to frontend format
- * @param {object} record - Recommendation data
- * @returns {object} Frontend-formatted recommendation
- */
 const transformRecommendation = (record) => {
   if (!record) return null;
 
@@ -218,42 +259,28 @@ const transformRecommendation = (record) => {
   };
 };
 
-/**
- * Transform payroll forecast to frontend format
- * @param {object} record - Forecast data
- * @returns {object} Frontend-formatted forecast
- */
 const transformForecast = (record) => {
   if (!record) return null;
 
   return {
     month: record.month,
-    actual: record.actual !== undefined ? parseFloat(record.actual) : undefined,
-    forecast: record.forecast !== undefined ? parseFloat(record.forecast) : undefined,
+    actual: record.actual !== undefined ? parseNumber(record.actual) : undefined,
+    forecast: record.forecast !== undefined ? parseNumber(record.forecast) : undefined,
   };
 };
 
-// Date formatting helpers
 const formatDate = (date) => {
   if (!date) return null;
-  const d = new Date(date);
-  return d.toISOString().split('T')[0]; // YYYY-MM-DD
-};
-
-const formatTime = (datetime) => {
-  if (!datetime) return null;
-  const d = new Date(datetime);
-  return d.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: true
-  }); // e.g., "09:00 AM"
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return String(date);
+  return parsed.toISOString().split('T')[0];
 };
 
 const formatDateTime = (datetime) => {
   if (!datetime) return null;
   const d = new Date(datetime);
-  return `${formatDate(d)} ${formatTime(d)}`; // "2024-11-15 09:00 AM"
+  if (Number.isNaN(d.getTime())) return String(datetime);
+  return `${formatDate(d)} ${formatTime(d)}`;
 };
 
 module.exports = {
@@ -262,8 +289,11 @@ module.exports = {
   toCamelCase,
   toSnakeCase,
   transformEmployee,
+  transformEmployeeList,
   transformAttendance,
+  transformAttendanceList,
   transformLeaveRequest,
+  transformLeaveRequestList,
   transformPayrollRecord,
   transformAlert,
   transformRecommendation,

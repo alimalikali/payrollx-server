@@ -13,6 +13,7 @@ class AppError extends Error {
     super(message);
     this.statusCode = statusCode;
     this.code = code;
+    this.status = `${statusCode}`.startsWith('4') ? 'fail' : 'error';
     this.isOperational = true;
 
     Error.captureStackTrace(this, this.constructor);
@@ -23,8 +24,15 @@ class AppError extends Error {
  * 400 Bad Request
  */
 class BadRequestError extends AppError {
-  constructor(message = 'Bad request', code = ErrorCodes.INVALID_INPUT) {
+  constructor(message = 'Bad request', detailsOrCode = ErrorCodes.INVALID_INPUT) {
+    const isDetails =
+      Array.isArray(detailsOrCode) ||
+      (detailsOrCode && typeof detailsOrCode === 'object');
+    const code = isDetails ? ErrorCodes.INVALID_INPUT : detailsOrCode;
     super(message, 400, code);
+    if (isDetails) {
+      this.details = detailsOrCode;
+    }
   }
 }
 
@@ -71,6 +79,7 @@ class ValidationError extends AppError {
   constructor(message = 'Validation failed', details = null) {
     super(message, 422, ErrorCodes.VALIDATION_ERROR);
     this.details = details;
+    this.errors = details;
   }
 }
 

@@ -20,7 +20,18 @@ app.use(helmet());
 
 // CORS configuration
 app.use(cors({
-  origin: config.clientUrl,
+  origin: (origin, callback) => {
+    // Allow non-browser clients (curl/postman/server-to-server)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (config.clientUrls.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error(`CORS blocked for origin: ${origin}`));
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
@@ -39,9 +50,11 @@ if (config.nodeEnv === 'development') {
   app.use(morgan('combined'));
 }
 
-// Rate limiting
-app.use('/api/v1/auth', authLimiter);
-app.use('/api/v1', globalLimiter);
+// Rate limiting (disabled in test mode to keep integration tests deterministic)
+if (config.nodeEnv !== 'test') {
+  app.use('/api/v1/auth', authLimiter);
+  app.use('/api/v1', globalLimiter);
+}
 
 // Health check endpoint
 app.get('/health', (req, res) => {

@@ -44,22 +44,24 @@ describe('API Response Utilities', () => {
   });
 
   describe('error', () => {
-    it('should create error response with message', () => {
-      const response = error('Something went wrong');
+    it('should create error response with code and message', () => {
+      const response = error('INTERNAL_ERROR', 'Something went wrong');
 
       expect(response.success).toBe(false);
+      expect(response.error.code).toBe('INTERNAL_ERROR');
       expect(response.error.message).toBe('Something went wrong');
     });
 
     it('should include error code if provided', () => {
-      const response = error('Not found', 'NOT_FOUND');
+      const response = error('NOT_FOUND', 'Not found');
 
       expect(response.error.code).toBe('NOT_FOUND');
+      expect(response.error.message).toBe('Not found');
     });
 
     it('should include details if provided', () => {
       const details = [{ field: 'email', message: 'Invalid' }];
-      const response = error('Validation failed', 'VALIDATION_ERROR', details);
+      const response = error('VALIDATION_ERROR', 'Validation failed', details);
 
       expect(response.error.details).toEqual(details);
     });

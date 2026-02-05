@@ -11,8 +11,11 @@ const config = require('../config');
  * Generate access token (short-lived: 15 minutes)
  */
 const generateAccessToken = (payload) => {
-  return jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.accessExpiresIn,
+  const secret = config.jwt.accessSecret || config.jwt.secret;
+  const expiresIn = config.jwt.accessExpiry || config.jwt.accessExpiresIn;
+
+  return jwt.sign(payload, secret, {
+    expiresIn,
     issuer: 'payrollx',
     audience: 'payrollx-client',
   });
@@ -37,7 +40,9 @@ const hashToken = (token) => {
  */
 const verifyAccessToken = (token) => {
   try {
-    return jwt.verify(token, config.jwt.secret, {
+    const secret = config.jwt.accessSecret || config.jwt.secret;
+
+    return jwt.verify(token, secret, {
       issuer: 'payrollx',
       audience: 'payrollx-client',
     });
@@ -74,8 +79,8 @@ const generateTokenPair = (user) => {
   return {
     accessToken,
     refreshToken,
-    accessTokenExpiresIn: config.jwt.accessExpiresIn,
-    refreshTokenExpiresIn: config.jwt.refreshExpiresIn,
+    accessTokenExpiresIn: config.jwt.accessExpiry || config.jwt.accessExpiresIn,
+    refreshTokenExpiresIn: config.jwt.refreshExpiry || config.jwt.refreshExpiresIn,
   };
 };
 
@@ -83,7 +88,8 @@ const generateTokenPair = (user) => {
  * Calculate refresh token expiry date
  */
 const getRefreshTokenExpiry = () => {
-  const days = parseInt(config.jwt.refreshExpiresIn) || 7;
+  const expiry = config.jwt.refreshExpiry || config.jwt.refreshExpiresIn;
+  const days = parseInt(expiry, 10) || 7;
   return new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 };
 

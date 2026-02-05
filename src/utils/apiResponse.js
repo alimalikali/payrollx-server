@@ -9,11 +9,15 @@
  * @param {object} meta - Optional metadata (pagination, etc.)
  * @returns {object} Formatted success response
  */
-const success = (data, meta = null) => {
+const success = (data, message = null, meta = null) => {
   const response = {
     success: true,
     data,
   };
+
+  if (message) {
+    response.message = message;
+  }
 
   if (meta) {
     response.meta = meta;

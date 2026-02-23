@@ -126,11 +126,11 @@ npm run dev
 
 ### Test Accounts
 
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@payrollx.com | Admin@123 |
-| HR | hr@payrollx.com | Hr@123456 |
-| Employee | ahmad.khan@payrollx.com | Employee@123 |
+  ─────────────────────────────────────
+  Admin:    admin@payrollx.com / Admin@123
+  HR:       hr@payrollx.com / Hr@123456
+  Employee: ahmad.khan@payrollx.com / Employee@123
+
 
 ## API Documentation
 

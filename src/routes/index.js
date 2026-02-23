@@ -11,6 +11,7 @@ const departmentRoutes = require('./departments.routes');
 const payrollRoutes = require('./payroll.routes');
 const aiRoutes = require('./ai.routes');
 const settingsRoutes = require('./settings.routes');
+const dashboardRoutes = require('./dashboard.routes');
 
 // API Information endpoint
 router.get('/', (req, res) => {
@@ -30,6 +31,7 @@ router.get('/', (req, res) => {
         ai: '/api/v1/ai',
         chatbot: '/api/v1/chatbot',
         settings: '/api/v1/settings',
+        dashboard: '/api/v1/dashboard',
       },
     },
   });
@@ -44,5 +46,6 @@ router.use('/departments', departmentRoutes);
 router.use('/payroll', payrollRoutes);
 router.use('/ai', aiRoutes);
 router.use('/settings', settingsRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 module.exports = router;

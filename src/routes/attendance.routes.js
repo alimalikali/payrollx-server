@@ -52,7 +52,7 @@ router.get('/daily-stats', hrOrAdmin, attendanceController.getDailyStats);
 router.get('/summary/:employeeId', commonValidation.uuid('employeeId')[0], attendanceController.getEmployeeSummary);
 
 // CRUD and admin operations
-router.get('/', hrOrAdmin, attendanceController.getAttendance);
+router.get('/', attendanceController.getAttendance);
 router.get('/:id', commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
 router.post('/mark', hrOrAdmin, attendanceValidation.mark, attendanceController.markAttendance);
 router.post('/bulk', hrOrAdmin, attendanceValidation.bulk, attendanceController.bulkMark);

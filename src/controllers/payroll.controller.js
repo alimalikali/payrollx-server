@@ -6,6 +6,7 @@ const payrollService = require('../services/payroll.service');
 const { calculateMonthlyTax, calculateAllDeductions, getTaxSlabInfo } = require('../utils/taxCalculator');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { ForbiddenError } = require('../utils/errors');
 
 /**
  * Get all payroll runs
@@ -70,10 +71,11 @@ const approvePayroll = asyncHandler(async (req, res) => {
  */
 const getPayslips = asyncHandler(async (req, res) => {
   const { payrollRunId, employeeId, page, limit } = req.query;
+  const scopedEmployeeId = req.user.role === 'employee' ? req.user.employeeId : employeeId;
 
   const result = await payrollService.getPayslips({
     payrollRunId,
-    employeeId,
+    employeeId: scopedEmployeeId,
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 10,
   });
@@ -86,6 +88,10 @@ const getPayslips = asyncHandler(async (req, res) => {
  */
 const getPayslip = asyncHandler(async (req, res) => {
   const payslip = await payrollService.getPayslipById(req.params.id);
+
+  if (req.user.role === 'employee' && payslip.employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You do not have permission to access this payslip');
+  }
 
   res.json(success(payslip));
 });

@@ -6,6 +6,7 @@
 const leaveService = require('../services/leave.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { ForbiddenError } = require('../utils/errors');
 
 /**
  * Get all leave requests
@@ -13,11 +14,12 @@ const { asyncHandler } = require('../middleware/errorHandler');
  */
 const getLeaveRequests = asyncHandler(async (req, res) => {
   const { page, limit, employeeId, status, leaveTypeId, startDate, endDate } = req.query;
+  const scopedEmployeeId = req.user.role === 'employee' ? req.user.employeeId : employeeId;
 
   const result = await leaveService.getLeaveRequests({
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 10,
-    employeeId,
+    employeeId: scopedEmployeeId,
     status,
     leaveTypeId,
     startDate,
@@ -34,6 +36,10 @@ const getLeaveRequests = asyncHandler(async (req, res) => {
 const getLeaveRequest = asyncHandler(async (req, res) => {
   const leave = await leaveService.getLeaveRequestById(req.params.id);
 
+  if (req.user.role === 'employee' && leave.employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You do not have permission to access this leave request');
+  }
+
   res.json(success(leave));
 });
 
@@ -44,8 +50,9 @@ const getLeaveRequest = asyncHandler(async (req, res) => {
 const createLeaveRequest = asyncHandler(async (req, res) => {
   const { employeeId, leaveTypeId, startDate, endDate, reason, isHalfDay, halfDayType, attachmentUrl } = req.body;
 
-  // Use requesting user's employee ID if not provided
-  const targetEmployeeId = employeeId || req.user.employeeId;
+  const targetEmployeeId = req.user.role === 'employee'
+    ? req.user.employeeId
+    : (employeeId || req.user.employeeId);
 
   const leave = await leaveService.createLeaveRequest({
     employeeId: targetEmployeeId,
@@ -88,7 +95,10 @@ const rejectLeaveRequest = asyncHandler(async (req, res) => {
  * POST /api/v1/leaves/:id/cancel
  */
 const cancelLeaveRequest = asyncHandler(async (req, res) => {
-  const leave = await leaveService.cancelLeaveRequest(req.params.id, req.user.id);
+  const leave = await leaveService.cancelLeaveRequest(req.params.id, req.user.id, {
+    isEmployee: req.user.role === 'employee',
+    employeeId: req.user.employeeId,
+  });
 
   res.json(success(leave, 'Leave request cancelled'));
 });
@@ -110,6 +120,10 @@ const getLeaveTypes = asyncHandler(async (req, res) => {
 const getLeaveBalance = asyncHandler(async (req, res) => {
   const { employeeId } = req.params;
   const { year } = req.query;
+
+  if (req.user.role === 'employee' && employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You do not have permission to access this leave balance');
+  }
 
   const balance = await leaveService.getLeaveBalance(employeeId, parseInt(year));
 

@@ -6,6 +6,7 @@
 const attendanceService = require('../services/attendance.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { ForbiddenError } = require('../utils/errors');
 
 /**
  * Get all attendance records
@@ -13,11 +14,12 @@ const { asyncHandler } = require('../middleware/errorHandler');
  */
 const getAttendance = asyncHandler(async (req, res) => {
   const { page, limit, employeeId, startDate, endDate, status, date } = req.query;
+  const scopedEmployeeId = req.user.role === 'employee' ? req.user.employeeId : employeeId;
 
   const result = await attendanceService.getAttendance({
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 10,
-    employeeId,
+    employeeId: scopedEmployeeId,
     startDate,
     endDate,
     status,
@@ -34,6 +36,10 @@ const getAttendance = asyncHandler(async (req, res) => {
 const getAttendanceById = asyncHandler(async (req, res) => {
   const attendance = await attendanceService.getAttendanceById(req.params.id);
 
+  if (req.user.role === 'employee' && attendance.employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You do not have permission to access this attendance record');
+  }
+
   res.json(success(attendance));
 });
 
@@ -44,8 +50,9 @@ const getAttendanceById = asyncHandler(async (req, res) => {
 const checkIn = asyncHandler(async (req, res) => {
   const { employeeId, checkInLocation } = req.body;
 
-  // Use requesting user's employee ID if not provided (self check-in)
-  const targetEmployeeId = employeeId || req.user.employeeId;
+  const targetEmployeeId = req.user.role === 'employee'
+    ? req.user.employeeId
+    : (employeeId || req.user.employeeId);
 
   const attendance = await attendanceService.checkIn({
     employeeId: targetEmployeeId,
@@ -63,7 +70,9 @@ const checkIn = asyncHandler(async (req, res) => {
 const checkOut = asyncHandler(async (req, res) => {
   const { employeeId, checkOutLocation } = req.body;
 
-  const targetEmployeeId = employeeId || req.user.employeeId;
+  const targetEmployeeId = req.user.role === 'employee'
+    ? req.user.employeeId
+    : (employeeId || req.user.employeeId);
 
   const attendance = await attendanceService.checkOut({
     employeeId: targetEmployeeId,
@@ -100,6 +109,10 @@ const markAttendance = asyncHandler(async (req, res) => {
 const getEmployeeSummary = asyncHandler(async (req, res) => {
   const { employeeId } = req.params;
   const { month, year } = req.query;
+
+  if (req.user.role === 'employee' && employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You do not have permission to access this attendance summary');
+  }
 
   const currentDate = new Date();
   const targetMonth = parseInt(month) || currentDate.getMonth() + 1;

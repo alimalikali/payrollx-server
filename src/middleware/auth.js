@@ -5,11 +5,12 @@
 
 const { verifyAccessToken } = require('../utils/jwt');
 const { UnauthorizedError, ForbiddenError } = require('../utils/errors');
+const db = require('../config/database');
 
 /**
  * Protect routes - requires valid JWT token
  */
-const protect = (req, res, next) => {
+const protect = async (req, res, next) => {
   try {
     // Get token from header
     const authHeader = req.headers.authorization;
@@ -28,11 +29,25 @@ const protect = (req, res, next) => {
     const decoded = verifyAccessToken(token);
 
     // Attach user info to request
-    req.user = {
+    const user = {
       id: decoded.userId,
       email: decoded.email,
       role: decoded.role,
     };
+
+    if (user.role === 'employee') {
+      try {
+        const employeeResult = await db.query(
+          'SELECT id FROM employees WHERE user_id = $1 LIMIT 1',
+          [user.id]
+        );
+        user.employeeId = employeeResult?.rows?.[0]?.id || null;
+      } catch (_) {
+        user.employeeId = null;
+      }
+    }
+
+    req.user = user;
 
     next();
   } catch (error) {

@@ -6,6 +6,7 @@
 const employeeService = require('../services/employee.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { ForbiddenError } = require('../utils/errors');
 
 /**
  * Get all employees
@@ -32,6 +33,19 @@ const getEmployees = asyncHandler(async (req, res) => {
  * GET /api/v1/employees/:id
  */
 const getEmployee = asyncHandler(async (req, res) => {
+  if (req.user.role === 'employee') {
+    const ownProfile = await employeeService.getEmployeeById(req.user.employeeId);
+    const requestedIdentifier = String(req.params.id).toLowerCase();
+    const ownUuid = String(ownProfile.id).toLowerCase();
+    const ownCode = String(ownProfile.employeeId || '').toLowerCase();
+
+    if (requestedIdentifier !== ownUuid && requestedIdentifier !== ownCode) {
+      throw new ForbiddenError('You do not have permission to access this employee profile');
+    }
+
+    return res.json(success(ownProfile));
+  }
+
   const employee = await employeeService.getEmployeeByIdentifier(req.params.id);
 
   res.json(success(employee));

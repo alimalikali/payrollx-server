@@ -4,7 +4,7 @@
  */
 
 const db = require('../config/database');
-const { NotFoundError, BadRequestError } = require('../utils/errors');
+const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/errors');
 const { transformLeaveRequest, transformLeaveRequestList } = require('../utils/transformers');
 
 /**
@@ -252,7 +252,8 @@ const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
 /**
  * Cancel leave request
  */
-const cancelLeaveRequest = async (id, userId) => {
+const cancelLeaveRequest = async (id, userId, options = {}) => {
+  const { isEmployee = false, employeeId = null } = options;
   const request = await db.query(
     'SELECT * FROM leave_requests WHERE id = $1',
     [id]
@@ -264,6 +265,10 @@ const cancelLeaveRequest = async (id, userId) => {
 
   if (!['pending', 'approved'].includes(request.rows[0].status)) {
     throw new BadRequestError('Only pending or approved requests can be cancelled');
+  }
+
+  if (isEmployee && request.rows[0].employee_id !== employeeId) {
+    throw new ForbiddenError('You can only cancel your own leave requests');
   }
 
   await db.query(

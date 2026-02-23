@@ -8,9 +8,11 @@ const salaryAnomalyService = require('../services/ai/salaryAnomaly.service');
 const payrollForecastService = require('../services/ai/payrollForecast.service');
 const salaryRecommendationService = require('../services/ai/salaryRecommendation.service');
 const chatbotService = require('../services/ai/chatbot.service');
+const dashboardService = require('../services/dashboard.service');
 const db = require('../config/database');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { ForbiddenError } = require('../utils/errors');
 
 // Fraud Detection
 
@@ -227,6 +229,22 @@ const getDashboardStats = asyncHandler(async (req, res) => {
   }));
 });
 
+const getEmployeeInsights = asyncHandler(async (req, res) => {
+  if (!req.user.employeeId) {
+    throw new ForbiddenError('Employee profile not found for this user');
+  }
+
+  const dashboard = await dashboardService.getEmployeeDashboard({ employeeId: req.user.employeeId });
+
+  res.json(success({
+    employeeId: req.user.employeeId,
+    monthSummary: dashboard.monthSummary,
+    leaveBalances: dashboard.leaveBalances,
+    latestPayslip: dashboard.latestPayslip,
+    aiInsights: dashboard.aiInsights,
+  }));
+});
+
 module.exports = {
   runFraudDetection,
   getFraudStats,
@@ -241,4 +259,5 @@ module.exports = {
   getAlerts,
   updateAlertStatus,
   getDashboardStats,
+  getEmployeeInsights,
 };

@@ -28,6 +28,7 @@ const alertStatusValidation = [
 
 // Dashboard stats (all authenticated users)
 router.get('/dashboard', aiController.getDashboardStats);
+router.get('/employee/me', aiController.getEmployeeInsights);
 
 // Chatbot (all authenticated users)
 router.post('/chatbot', chatValidation, aiController.sendChatMessage);

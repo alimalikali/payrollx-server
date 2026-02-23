@@ -32,7 +32,7 @@ const getEmployees = asyncHandler(async (req, res) => {
  * GET /api/v1/employees/:id
  */
 const getEmployee = asyncHandler(async (req, res) => {
-  const employee = await employeeService.getEmployeeById(req.params.id);
+  const employee = await employeeService.getEmployeeByIdentifier(req.params.id);
 
   res.json(success(employee));
 });

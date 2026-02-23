@@ -7,6 +7,8 @@ const db = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
 const { transformEmployee, transformEmployeeList } = require('../utils/transformers');
 
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 /**
  * Get all employees with pagination and filters
  */
@@ -86,8 +88,7 @@ const getEmployees = async ({ page = 1, limit = 10, search, department, status, 
 /**
  * Get employee by ID
  */
-const getEmployeeById = async (id) => {
-  const query = `
+const employeeDetailsQuery = `
     SELECT
       e.*,
       d.name as department_name,
@@ -110,9 +111,10 @@ const getEmployeeById = async (id) => {
     LEFT JOIN departments d ON e.department_id = d.id
     LEFT JOIN salary_structures ss ON ss.employee_id = e.id AND ss.is_current = true
     LEFT JOIN employees mgr ON e.reporting_to = mgr.id
-    WHERE e.id = $1
   `;
 
+const getEmployeeById = async (id) => {
+  const query = `${employeeDetailsQuery} WHERE e.id = $1`;
   const result = await db.query(query, [id]);
 
   if (result.rows.length === 0) {
@@ -120,6 +122,33 @@ const getEmployeeById = async (id) => {
   }
 
   return transformEmployee(result.rows[0]);
+};
+
+/**
+ * Get employee by employee_id (code)
+ */
+const getEmployeeByEmployeeId = async (employeeId) => {
+  const query = `${employeeDetailsQuery} WHERE e.employee_id = $1`;
+  const result = await db.query(query, [employeeId]);
+
+  if (result.rows.length === 0) {
+    throw new NotFoundError('Employee not found');
+  }
+
+  return transformEmployee(result.rows[0]);
+};
+
+/**
+ * Get employee by identifier (UUID or employee_id)
+ */
+const getEmployeeByIdentifier = async (identifier) => {
+  if (!identifier) {
+    throw new BadRequestError('Employee identifier is required');
+  }
+
+  return UUID_REGEX.test(identifier)
+    ? getEmployeeById(identifier)
+    : getEmployeeByEmployeeId(identifier);
 };
 
 /**
@@ -365,6 +394,8 @@ const getEmployeesByDepartment = async () => {
 module.exports = {
   getEmployees,
   getEmployeeById,
+  getEmployeeByEmployeeId,
+  getEmployeeByIdentifier,
   createEmployee,
   updateEmployee,
   deleteEmployee,

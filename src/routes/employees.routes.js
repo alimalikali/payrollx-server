@@ -49,7 +49,7 @@ router.get('/by-department', hrOrAdmin, employeeController.getByDepartment);
 // CRUD routes
 router.get('/', hrOrAdmin, employeeController.getEmployees);
 router.post('/', hrOrAdmin, employeeValidation.create, employeeController.createEmployee);
-router.get('/:id', commonValidation.uuid('id')[0], employeeController.getEmployee);
+router.get('/:id', employeeController.getEmployee);
 router.put('/:id', hrOrAdmin, commonValidation.uuid('id')[0], employeeValidation.update, employeeController.updateEmployee);
 router.delete('/:id', hrOrAdmin, commonValidation.uuid('id')[0], employeeController.deleteEmployee);
 

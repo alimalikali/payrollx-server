@@ -46,8 +46,8 @@ const matchesPasswordHash = async (password, passwordHash) => {
  * Register a new user
  */
 const register = async ({ email, password, role = 'employee' }) => {
-  if (!['hr', 'employee'].includes(role)) {
-    throw new BadRequestError('Role must be hr or employee');
+  if (!['admin', 'hr', 'employee'].includes(role)) {
+    throw new BadRequestError('Role must be admin, hr, or employee');
   }
 
   const normalizedEmail = normalizeEmail(email);

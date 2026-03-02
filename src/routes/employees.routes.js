@@ -62,6 +62,16 @@ const employeeValidation = {
     body('salaryDetails.bankName').optional().trim().notEmpty(),
     body('salaryDetails.bankRoutingCode').optional().trim().notEmpty(),
     body('salaryDetails.paymentMethod').optional().isIn(['bank_transfer', 'check']),
+    body('password')
+      .optional()
+      .isLength({ min: 8 })
+      .withMessage('Password must be at least 8 characters')
+      .matches(/[a-z]/)
+      .withMessage('Password must contain at least one lowercase letter')
+      .matches(/[A-Z]/)
+      .withMessage('Password must contain at least one uppercase letter')
+      .matches(/[0-9]/)
+      .withMessage('Password must contain at least one number'),
     body('legalInfo.legalIdType').optional().isIn(['cnic', 'passport', 'national_id', 'other']),
     body('legalInfo.legalIdNumber').optional().trim().notEmpty(),
     body('legalInfo.taxIdentifier').optional().trim().notEmpty(),
@@ -107,6 +117,7 @@ const employeeValidation = {
       const legalIdType = legalInfo.legalIdType ?? value.legalIdType;
       const legalIdNumber = legalInfo.legalIdNumber ?? value.legalIdNumber;
       const taxIdentifier = legalInfo.taxIdentifier ?? value.taxIdentifier;
+      const password = value.password;
 
       if (!fullName) throw new Error('Full name is required');
       if (!email) throw new Error('Email is required');
@@ -149,6 +160,7 @@ const employeeValidation = {
       if (!legalIdType) throw new Error('Legal ID type is required');
       if (!legalIdNumber) throw new Error('Legal ID number is required');
       if (!taxIdentifier) throw new Error('Tax identifier is required');
+      if (!password) throw new Error('Password is required');
       if (legalIdType === 'cnic' && !/^\d{5}-\d{7}-\d$/.test(legalIdNumber)) {
         throw new Error('Invalid CNIC format (XXXXX-XXXXXXX-X)');
       }
@@ -168,6 +180,7 @@ const employeeValidation = {
     body('lastName').optional().trim().notEmpty(),
     body('email').optional().trim().isEmail().normalizeEmail(),
     body('phone').optional().trim(),
+    body('profileImage').optional().trim().notEmpty(),
     body('cnic').optional().matches(/^\d{5}-\d{7}-\d$/).withMessage('Invalid CNIC format'),
     body('gender').optional().isIn(['male', 'female', 'other']),
     body('employmentType').optional().isIn(['full_time', 'part_time', 'contract', 'intern']),
@@ -190,6 +203,10 @@ const employeeValidation = {
     body('providentFundEmployer').optional().isFloat({ min: 0 }),
     handleValidation,
   ],
+  updateProfileImage: [
+    body('profileImage').trim().notEmpty().withMessage('Profile image is required'),
+    handleValidation,
+  ],
 };
 
 // Statistics routes (must be before :id routes)
@@ -198,6 +215,7 @@ router.get('/by-department', hrOnly, employeeController.getByDepartment);
 
 // CRUD routes
 router.get('/me', employeeController.getMyEmployee);
+router.patch('/me/profile-image', employeeValidation.updateProfileImage, employeeController.updateMyProfileImage);
 router.get('/:id/attendance-leave-summary', employeeController.getAttendanceLeaveSummary);
 router.get('/', hrOnly, employeeController.getEmployees);
 router.post('/', hrOnly, employeeValidation.create, employeeController.createEmployee);

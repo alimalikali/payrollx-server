@@ -6,11 +6,7 @@
 const employeeService = require('../services/employee.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
-<<<<<<< HEAD
-const { ForbiddenError } = require('../utils/errors');
-=======
 const { ForbiddenError, NotFoundError } = require('../utils/errors');
->>>>>>> bdd7077 (Updated project files)
 
 /**
  * Get all employees
@@ -153,6 +149,22 @@ const getAttendanceLeaveSummary = asyncHandler(async (req, res) => {
   res.json(success(summary));
 });
 
+/**
+ * Update current employee profile image
+ * PATCH /api/v1/employees/me/profile-image
+ */
+const updateMyProfileImage = asyncHandler(async (req, res) => {
+  if (!req.user.employeeId) {
+    throw new NotFoundError('Employee profile not found');
+  }
+
+  const employee = await employeeService.updateEmployee(req.user.employeeId, {
+    profileImage: req.body.profileImage,
+  });
+
+  res.json(success(employee, 'Profile image updated successfully'));
+});
+
 module.exports = {
   getEmployees,
   getEmployee,
@@ -163,4 +175,5 @@ module.exports = {
   getStats,
   getByDepartment,
   getAttendanceLeaveSummary,
+  updateMyProfileImage,
 };

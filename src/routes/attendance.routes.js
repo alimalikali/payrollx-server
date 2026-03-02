@@ -51,18 +51,10 @@ router.post('/check-out', attendanceValidation.checkOut, attendanceController.ch
 router.get('/daily-stats', hrOnly, attendanceController.getDailyStats);
 router.get('/summary/:employeeId', commonValidation.uuid('employeeId')[0], ownerOrHR('employeeId'), attendanceController.getEmployeeSummary);
 
-<<<<<<< HEAD
-// CRUD and admin operations
-router.get('/', attendanceController.getAttendance);
-router.get('/:id', commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
-router.post('/mark', hrOrAdmin, attendanceValidation.mark, attendanceController.markAttendance);
-router.post('/bulk', hrOrAdmin, attendanceValidation.bulk, attendanceController.bulkMark);
-=======
 // Attendance access and admin operations
 router.get('/', attendanceController.getAttendance);
-router.get('/:id', hrOnly, commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
+router.get('/:id', commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
 router.post('/mark', hrOnly, attendanceValidation.mark, attendanceController.markAttendance);
 router.post('/bulk', hrOnly, attendanceValidation.bulk, attendanceController.bulkMark);
->>>>>>> bdd7077 (Updated project files)
 
 module.exports = router;

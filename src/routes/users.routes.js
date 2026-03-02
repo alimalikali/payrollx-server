@@ -9,7 +9,7 @@ router.use(protect);
 router.use(hrOnly);
 
 const roleValidation = [
-  body('role').isIn(['hr', 'employee']).withMessage('Role must be hr or employee'),
+  body('role').isIn(['admin', 'hr', 'employee']).withMessage('Role must be admin, hr, or employee'),
   body('reason').optional().isString().withMessage('Reason must be a string'),
   handleValidation,
 ];

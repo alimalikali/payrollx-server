@@ -1,12 +1,11 @@
 const express = require('express');
 const uploadController = require('../controllers/upload.controller');
-const { protect, hrOnly } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { body, handleValidation } = require('../middleware/validate');
 
 const router = express.Router();
 
 router.use(protect);
-router.use(hrOnly);
 
 router.post(
   '/profile-photo',

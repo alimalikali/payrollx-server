@@ -45,8 +45,8 @@ const authValidation = {
       .withMessage('Password must contain at least one number'),
     body('role')
       .optional()
-      .isIn(['hr', 'employee'])
-      .withMessage('Role must be hr or employee'),
+      .isIn(['admin', 'hr', 'employee'])
+      .withMessage('Role must be admin, hr, or employee'),
     handleValidation,
   ],
 

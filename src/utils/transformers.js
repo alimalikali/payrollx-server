@@ -1,3 +1,5 @@
+const { formatLocalDate } = require('./dateTime');
+
 /**
  * Data Transformation Utilities
  * Converts between snake_case (database) and camelCase (frontend)
@@ -347,9 +349,7 @@ const transformForecast = (record) => {
 
 const formatDate = (date) => {
   if (!date) return null;
-  const parsed = new Date(date);
-  if (Number.isNaN(parsed.getTime())) return String(date);
-  return parsed.toISOString().split('T')[0];
+  return formatLocalDate(date);
 };
 
 const formatDateTime = (datetime) => {

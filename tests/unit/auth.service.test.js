@@ -29,6 +29,7 @@ jest.mock('../../src/domain/permissions', () => ({
 const db = require('../../src/config/database');
 const bcrypt = require('bcryptjs');
 const authService = require('../../src/services/auth.service');
+const { getPermissionsForRole } = require('../../src/domain/permissions');
 
 describe('Auth Service', () => {
   beforeEach(() => {
@@ -102,6 +103,50 @@ describe('Auth Service', () => {
         'UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2',
         ['new-password-hash', 'user-123']
       );
+    });
+  });
+
+  describe('register', () => {
+    it('accepts admin as a valid privileged role', async () => {
+      db.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'admin-123',
+            email: 'admin@payrollx.com',
+            role: 'admin',
+            is_active: true,
+            created_at: '2026-03-02T00:00:00.000Z',
+          }],
+        });
+
+      bcrypt.hash.mockResolvedValueOnce('admin-password-hash');
+
+      const result = await authService.register({
+        email: 'Admin@PayrollX.com',
+        password: 'AdminPass123',
+        role: 'admin',
+      });
+
+      expect(result.role).toBe('admin');
+      expect(db.query).toHaveBeenNthCalledWith(
+        2,
+        `INSERT INTO users (email, password_hash, role, must_change_password)
+     VALUES ($1, $2, $3, true)
+     RETURNING id, email, role, is_active, created_at`,
+        ['admin@payrollx.com', 'admin-password-hash', 'admin']
+      );
+    });
+  });
+
+  describe('permissions', () => {
+    it('returns the full privileged permission set for admin', () => {
+      getPermissionsForRole.mockReturnValueOnce(['employee:create', 'leave:approve']);
+
+      const permissions = getPermissionsForRole('admin');
+
+      expect(permissions).toEqual(['employee:create', 'leave:approve']);
+      expect(getPermissionsForRole).toHaveBeenCalledWith('admin');
     });
   });
 });

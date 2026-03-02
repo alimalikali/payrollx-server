@@ -27,14 +27,14 @@ describe('Employee Service', () => {
   });
 
   describe('createEmployee', () => {
-    it('creates linked employee login account and returns temporary credentials', async () => {
+    it('creates linked employee login account with the HR-provided password', async () => {
       const client = {
         query: jest.fn(),
         release: jest.fn(),
       };
 
       db.getClient.mockResolvedValue(client);
-      bcrypt.hash.mockResolvedValue('hashed-temp-password');
+      bcrypt.hash.mockResolvedValue('hashed-created-password');
 
       client.query
         .mockResolvedValueOnce({}) // BEGIN
@@ -43,6 +43,8 @@ describe('Employee Service', () => {
         .mockResolvedValueOnce({ rows: [{ id: 'user-123', email: 'new.employee@payrollx.com' }] }) // insert user
         .mockResolvedValueOnce({ rows: [{ id: 'emp-123' }] }) // insert employee
         .mockResolvedValueOnce({}) // insert salary
+        .mockResolvedValueOnce({ rows: [{ id: 'leave-type-1', days_per_year: 14 }] }) // active leave types
+        .mockResolvedValueOnce({}) // insert leave allocation
         .mockResolvedValueOnce({}); // COMMIT
 
       db.query.mockResolvedValueOnce({
@@ -90,14 +92,14 @@ describe('Employee Service', () => {
         legalIdType: 'cnic',
         legalIdNumber: '12345-1234567-1',
         taxIdentifier: 'NTN-12345',
+        password: 'CreatedPass123',
       });
 
-      expect(bcrypt.hash).toHaveBeenCalledTimes(1);
+      expect(bcrypt.hash).toHaveBeenCalledWith('CreatedPass123', 12);
       expect(result.id).toBe('emp-123');
       expect(result.loginCredentials).toBeDefined();
       expect(result.loginCredentials.email).toBe('new.employee@payrollx.com');
-      expect(typeof result.loginCredentials.temporaryPassword).toBe('string');
-      expect(result.loginCredentials.temporaryPassword.length).toBeGreaterThanOrEqual(12);
+      expect(result.loginCredentials.password).toBe('CreatedPass123');
 
       const insertEmployeeCall = client.query.mock.calls.find(([query]) =>
         typeof query === 'string' && query.includes('INSERT INTO employees')
@@ -106,6 +108,86 @@ describe('Employee Service', () => {
       expect(insertEmployeeCall[1][0]).toBe('user-123');
       expect(insertEmployeeCall[1][5]).toBe('new.employee@payrollx.com');
 
+      const leaveTypeQueryCall = client.query.mock.calls.find(([query]) =>
+        typeof query === 'string' && query.includes('FROM leave_types')
+      );
+      expect(leaveTypeQueryCall).toBeDefined();
+
+      const insertLeaveAllocationCall = client.query.mock.calls.find(([query]) =>
+        typeof query === 'string' && query.includes('INSERT INTO leave_allocations')
+      );
+      expect(insertLeaveAllocationCall).toBeDefined();
+      expect(insertLeaveAllocationCall[1]).toEqual([
+        'emp-123',
+        'leave-type-1',
+        new Date().getFullYear(),
+        14,
+        0,
+      ]);
+
+      expect(client.release).toHaveBeenCalledTimes(1);
+    });
+
+    it('rolls back employee creation when leave allocation creation fails', async () => {
+      const client = {
+        query: jest.fn(),
+        release: jest.fn(),
+      };
+
+      db.getClient.mockResolvedValue(client);
+      bcrypt.hash.mockResolvedValue('hashed-created-password');
+
+      client.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ count: '0' }] }) // employee count
+        .mockResolvedValueOnce({ rows: [] }) // existing user check
+        .mockResolvedValueOnce({ rows: [{ id: 'user-123', email: 'new.employee@payrollx.com' }] }) // insert user
+        .mockResolvedValueOnce({ rows: [{ id: 'emp-123' }] }) // insert employee
+        .mockResolvedValueOnce({}) // insert salary
+        .mockResolvedValueOnce({ rows: [{ id: 'leave-type-1', days_per_year: 14 }] }) // active leave types
+        .mockRejectedValueOnce(new Error('leave allocation failed'))
+        .mockResolvedValueOnce({}); // ROLLBACK
+
+      await expect(employeeService.createEmployee({
+        firstName: 'New',
+        lastName: 'Employee',
+        email: 'new.employee@payrollx.com',
+        phone: '+1-555-0202',
+        dateOfBirth: '1998-02-25',
+        gender: 'male',
+        maritalStatus: 'single',
+        nationality: 'Pakistani',
+        profileImage: '/uploads/profiles/new-employee.png',
+        residentialAddress: '123 Main Street',
+        departmentId: '879f188f-d4c0-4c2a-9fdd-f6382f6bc18c',
+        jobTitle: 'Software Engineer',
+        employmentType: 'full_time',
+        probationPeriodMonths: 3,
+        workLocation: 'Lahore Office',
+        reportingTo: '2def08ce-a414-4ad6-9ad5-d4b4a2461460',
+        joiningDate: '2026-02-25',
+        basicSalary: 120000,
+        housingAllowance: 10000,
+        transportAllowance: 5000,
+        medicalAllowance: 3000,
+        utilityAllowance: 2000,
+        otherAllowances: 1000,
+        bonus: 0,
+        overtimeRate: 1200,
+        taxInformation: 'Filer',
+        providentFundEmployee: 4000,
+        providentFundEmployer: 4000,
+        bankAccountNumber: 'PK12ABCD123456789',
+        bankName: 'HBL',
+        bankRoutingCode: 'HBLPKKAXXX',
+        paymentMethod: 'bank_transfer',
+        legalIdType: 'cnic',
+        legalIdNumber: '12345-1234567-1',
+        taxIdentifier: 'NTN-12345',
+        password: 'CreatedPass123',
+      })).rejects.toThrow('leave allocation failed');
+
+      expect(client.query).toHaveBeenCalledWith('ROLLBACK');
       expect(client.release).toHaveBeenCalledTimes(1);
     });
 
@@ -153,6 +235,7 @@ describe('Employee Service', () => {
         legalIdType: 'cnic',
         legalIdNumber: '12345-7654321-1',
         taxIdentifier: 'NTN-55667',
+        password: 'CreatedPass123',
       })).rejects.toThrow('A login account with this email already exists');
 
       expect(client.query).toHaveBeenCalledWith('ROLLBACK');

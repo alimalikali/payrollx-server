@@ -6,11 +6,7 @@
 const leaveService = require('../services/leave.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
-<<<<<<< HEAD
-const { ForbiddenError } = require('../utils/errors');
-=======
 const { BadRequestError, ForbiddenError } = require('../utils/errors');
->>>>>>> bdd7077 (Updated project files)
 
 /**
  * Get all leave requests
@@ -18,9 +14,6 @@ const { BadRequestError, ForbiddenError } = require('../utils/errors');
  */
 const getLeaveRequests = asyncHandler(async (req, res) => {
   const { page, limit, employeeId, status, leaveTypeId, startDate, endDate } = req.query;
-<<<<<<< HEAD
-  const scopedEmployeeId = req.user.role === 'employee' ? req.user.employeeId : employeeId;
-=======
   let targetEmployeeId = employeeId;
 
   if (req.user.role === 'employee') {
@@ -29,16 +22,11 @@ const getLeaveRequests = asyncHandler(async (req, res) => {
     }
     targetEmployeeId = req.user.employeeId;
   }
->>>>>>> bdd7077 (Updated project files)
 
   const result = await leaveService.getLeaveRequests({
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 10,
-<<<<<<< HEAD
-    employeeId: scopedEmployeeId,
-=======
     employeeId: targetEmployeeId,
->>>>>>> bdd7077 (Updated project files)
     status,
     leaveTypeId,
     startDate,
@@ -54,9 +42,6 @@ const getLeaveRequests = asyncHandler(async (req, res) => {
  */
 const getLeaveRequest = asyncHandler(async (req, res) => {
   const leave = await leaveService.getLeaveRequestById(req.params.id);
-  if (req.user.role === 'employee' && leave.employeeId !== req.user.employeeId) {
-    throw new ForbiddenError('You can only view your own leave requests');
-  }
 
   if (req.user.role === 'employee' && leave.employeeId !== req.user.employeeId) {
     throw new ForbiddenError('You do not have permission to access this leave request');
@@ -72,11 +57,6 @@ const getLeaveRequest = asyncHandler(async (req, res) => {
 const createLeaveRequest = asyncHandler(async (req, res) => {
   const { employeeId, leaveTypeId, startDate, endDate, reason, isHalfDay, halfDayType, attachmentUrl } = req.body;
 
-<<<<<<< HEAD
-  const targetEmployeeId = req.user.role === 'employee'
-    ? req.user.employeeId
-    : (employeeId || req.user.employeeId);
-=======
   if (req.user.role === 'employee' && employeeId && employeeId !== req.user.employeeId) {
     throw new ForbiddenError('You can only apply leave for yourself');
   }
@@ -86,7 +66,6 @@ const createLeaveRequest = asyncHandler(async (req, res) => {
   if (!targetEmployeeId) {
     throw new BadRequestError('Employee ID is required');
   }
->>>>>>> bdd7077 (Updated project files)
 
   const leave = await leaveService.createLeaveRequest({
     employeeId: targetEmployeeId,
@@ -130,19 +109,10 @@ const rejectLeaveRequest = asyncHandler(async (req, res) => {
  * POST /api/v1/leaves/:id/cancel
  */
 const cancelLeaveRequest = asyncHandler(async (req, res) => {
-<<<<<<< HEAD
   const leave = await leaveService.cancelLeaveRequest(req.params.id, req.user.id, {
     isEmployee: req.user.role === 'employee',
     employeeId: req.user.employeeId,
   });
-=======
-  const request = await leaveService.getLeaveRequestById(req.params.id);
-  if (req.user.role === 'employee' && request.employeeId !== req.user.employeeId) {
-    throw new ForbiddenError('You can only cancel your own leave requests');
-  }
-
-  const leave = await leaveService.cancelLeaveRequest(req.params.id, req.user.id);
->>>>>>> bdd7077 (Updated project files)
 
   res.json(success(leave, 'Leave request cancelled'));
 });
@@ -166,11 +136,7 @@ const getLeaveBalance = asyncHandler(async (req, res) => {
   const { year } = req.query;
 
   if (req.user.role === 'employee' && employeeId !== req.user.employeeId) {
-<<<<<<< HEAD
     throw new ForbiddenError('You do not have permission to access this leave balance');
-=======
-    throw new ForbiddenError('You can only view your own leave balance');
->>>>>>> bdd7077 (Updated project files)
   }
 
   const balance = await leaveService.getLeaveBalance(employeeId, parseInt(year));

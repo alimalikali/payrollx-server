@@ -1,7 +1,8 @@
 const db = require('../config/database');
+const { formatLocalDate } = require('../utils/dateTime');
 
 const getHrDashboard = async () => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDate(new Date());
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
@@ -85,7 +86,7 @@ const getHrDashboard = async () => {
 };
 
 const getEmployeeDashboard = async ({ employeeId }) => {
-  const today = new Date().toISOString().split('T')[0];
+  const today = formatLocalDate(new Date());
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();

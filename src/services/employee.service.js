@@ -3,7 +3,6 @@
  * Handles employee CRUD operations and business logic
  */
 
-const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const db = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
@@ -17,33 +16,6 @@ const KNOWN_LEAVE_CODES = {
   sick: ['sl', 'sick_leave', 'sick'],
   casual: ['cl', 'casual_leave', 'casual'],
   paid: ['al', 'annual_leave', 'paid_leave', 'annual', 'paid'],
-};
-
-const generateTemporaryPassword = (length = 12) => {
-  const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-  const lowercase = 'abcdefghijkmnopqrstuvwxyz';
-  const numbers = '23456789';
-  const specials = '@#$%*!?';
-  const allChars = uppercase + lowercase + numbers + specials;
-
-  const required = [
-    uppercase[crypto.randomInt(0, uppercase.length)],
-    lowercase[crypto.randomInt(0, lowercase.length)],
-    numbers[crypto.randomInt(0, numbers.length)],
-    specials[crypto.randomInt(0, specials.length)],
-  ];
-
-  const passwordChars = [...required];
-  while (passwordChars.length < length) {
-    passwordChars.push(allChars[crypto.randomInt(0, allChars.length)]);
-  }
-
-  for (let i = passwordChars.length - 1; i > 0; i--) {
-    const j = crypto.randomInt(0, i + 1);
-    [passwordChars[i], passwordChars[j]] = [passwordChars[j], passwordChars[i]];
-  }
-
-  return passwordChars.join('');
 };
 
 const parseNumberValue = (value, fallback = 0) => {
@@ -67,6 +39,24 @@ const splitFullName = (fullName = '') => {
   };
 };
 
+const validateInitialPassword = (password) => {
+  if (typeof password !== 'string' || password.length < 8) {
+    throw new BadRequestError('Password must be at least 8 characters');
+  }
+  if (password.trim() !== password) {
+    throw new BadRequestError('Password cannot start or end with spaces');
+  }
+  if (!/[a-z]/.test(password)) {
+    throw new BadRequestError('Password must contain at least one lowercase letter');
+  }
+  if (!/[A-Z]/.test(password)) {
+    throw new BadRequestError('Password must contain at least one uppercase letter');
+  }
+  if (!/[0-9]/.test(password)) {
+    throw new BadRequestError('Password must contain at least one number');
+  }
+};
+
 const mapLeaveCategory = (code = '', name = '') => {
   const normalizedCode = String(code || '').trim().toLowerCase();
   const normalizedName = String(name || '').trim().toLowerCase().replace(/\s+/g, '_');
@@ -82,6 +72,24 @@ const mapLeaveCategory = (code = '', name = '') => {
     return 'paid';
   }
   return null;
+};
+
+const createDefaultLeaveAllocations = async (client, employeeId, year) => {
+  const leaveTypesResult = await client.query(
+    `SELECT id, days_per_year
+     FROM leave_types
+     WHERE is_active = true`
+  );
+
+  for (const leaveType of leaveTypesResult.rows) {
+    await client.query(
+      `INSERT INTO leave_allocations (
+        employee_id, leave_type_id, year, allocated_days, carried_forward_days
+      ) VALUES ($1, $2, $3, $4, $5)
+      ON CONFLICT (employee_id, leave_type_id, year) DO NOTHING`,
+      [employeeId, leaveType.id, year, leaveType.days_per_year, 0]
+    );
+  }
 };
 
 const normalizeEmployeePayload = (data = {}) => {
@@ -141,6 +149,7 @@ const normalizeEmployeePayload = (data = {}) => {
     taxIdentifier: legalInfo.taxIdentifier || data.taxIdentifier || data.ntnNumber || null,
     taxFilingStatus: data.taxFilingStatus || 'non_filer',
     status: data.status || 'active',
+    password: typeof data.password === 'string' ? data.password : '',
   };
 };
 
@@ -333,6 +342,8 @@ const createEmployee = async (data) => {
     throw new BadRequestError('Payment method must be bank_transfer or check');
   }
 
+  validateInitialPassword(normalizedData.password);
+
   if (normalizedData.legalIdType === 'cnic' && !/^\d{5}-\d{7}-\d$/.test(normalizedData.legalIdNumber || '')) {
     throw new BadRequestError('Invalid CNIC format (XXXXX-XXXXXXX-X)');
   }
@@ -364,8 +375,7 @@ const createEmployee = async (data) => {
       throw new BadRequestError('A login account with this email already exists');
     }
 
-    const temporaryPassword = generateTemporaryPassword();
-    const passwordHash = await bcrypt.hash(temporaryPassword, SALT_ROUNDS);
+    const passwordHash = await bcrypt.hash(normalizedData.password, SALT_ROUNDS);
 
     const userResult = await client.query(
       `INSERT INTO users (email, password_hash, role, must_change_password)
@@ -475,6 +485,12 @@ const createEmployee = async (data) => {
       normalizedData.joiningDate,
     ]);
 
+    await createDefaultLeaveAllocations(
+      client,
+      employee.id,
+      new Date().getFullYear()
+    );
+
     await client.query('COMMIT');
 
     // Fetch complete employee data
@@ -483,7 +499,7 @@ const createEmployee = async (data) => {
       ...createdEmployee,
       loginCredentials: {
         email: user.email,
-        temporaryPassword,
+        password: normalizedData.password,
       },
     };
   } catch (error) {

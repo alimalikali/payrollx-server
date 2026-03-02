@@ -8,7 +8,7 @@ jest.mock('../../src/utils/jwt', () => ({
 
 const db = require('../../src/config/database');
 const { verifyAccessToken } = require('../../src/utils/jwt');
-const { protect } = require('../../src/middleware/auth');
+const { protect, hrOnly, ownerOrHR } = require('../../src/middleware/auth');
 const { ForbiddenError } = require('../../src/utils/errors');
 
 const buildRequest = ({ method = 'GET', originalUrl = '/api/v1/employees' } = {}) => ({
@@ -107,5 +107,37 @@ describe('Auth Middleware', () => {
 
     expect(next).toHaveBeenCalledWith();
     expect(req.user.mustChangePassword).toBe(true);
+  });
+
+  it('allows admin users through hrOnly middleware', () => {
+    const req = { user: { role: 'admin' } };
+    const next = jest.fn();
+
+    hrOnly(req, {}, next);
+
+    expect(next).toHaveBeenCalledWith();
+  });
+
+  it('still blocks employee users from hrOnly middleware', () => {
+    const req = { user: { role: 'employee' } };
+    const next = jest.fn();
+
+    hrOnly(req, {}, next);
+
+    const error = next.mock.calls[0][0];
+    expect(error).toBeInstanceOf(ForbiddenError);
+    expect(error.message).toBe('You do not have permission to perform this action');
+  });
+
+  it('allows admin users to access ownerOrHR protected resources', () => {
+    const req = {
+      user: { id: 'admin-1', role: 'admin', employeeId: null },
+      params: { employeeId: 'emp-99' },
+    };
+    const next = jest.fn();
+
+    ownerOrHR('employeeId')(req, {}, next);
+
+    expect(next).toHaveBeenCalledWith();
   });
 });

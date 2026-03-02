@@ -6,8 +6,7 @@
 const { verifyAccessToken } = require('../utils/jwt');
 const { UnauthorizedError, ForbiddenError } = require('../utils/errors');
 const db = require('../config/database');
-<<<<<<< HEAD
-=======
+const { PRIVILEGED_ROLES, isPrivilegedRole } = require('../domain/permissions');
 
 const PASSWORD_CHANGE_ALLOWED_ROUTES = new Set([
   'GET /api/v1/auth/me',
@@ -20,7 +19,6 @@ const canAccessDuringPasswordReset = (req) => {
   const key = `${req.method.toUpperCase()} ${pathname}`;
   return PASSWORD_CHANGE_ALLOWED_ROUTES.has(key);
 };
->>>>>>> bdd7077 (Updated project files)
 
 /**
  * Protect routes - requires valid JWT token
@@ -69,28 +67,6 @@ const protect = async (req, res, next) => {
     }
 
     // Attach user info to request
-<<<<<<< HEAD
-    const user = {
-      id: decoded.userId,
-      email: decoded.email,
-      role: decoded.role,
-    };
-
-    if (user.role === 'employee') {
-      try {
-        const employeeResult = await db.query(
-          'SELECT id FROM employees WHERE user_id = $1 LIMIT 1',
-          [user.id]
-        );
-        user.employeeId = employeeResult?.rows?.[0]?.id || null;
-      } catch (_) {
-        user.employeeId = null;
-      }
-    }
-
-    req.user = user;
-
-=======
     req.user = {
       id: account.id,
       email: account.email,
@@ -103,8 +79,6 @@ const protect = async (req, res, next) => {
     if (req.user.mustChangePassword && !canAccessDuringPasswordReset(req)) {
       throw new ForbiddenError('You must change your password before continuing');
     }
-
->>>>>>> bdd7077 (Updated project files)
     next();
   } catch (error) {
     if (error.code === 'TOKEN_EXPIRED') {
@@ -166,7 +140,7 @@ const optionalAuth = async (req, res, next) => {
 
 /**
  * Restrict to specific roles
- * Usage: restrictTo('hr')
+ * Usage: restrictTo('admin', 'hr')
  */
 const restrictTo = (...roles) => {
   return (req, res, next) => {
@@ -185,7 +159,12 @@ const restrictTo = (...roles) => {
 /**
  * Restrict to HR only
  */
-const hrOnly = restrictTo('hr');
+const hrOnly = restrictTo(...PRIVILEGED_ROLES);
+
+/**
+ * Backward-compatible alias for legacy route files.
+ */
+const hrOrAdmin = hrOnly;
 
 /**
  * Check if user owns resource (employee ID) or is HR
@@ -199,7 +178,7 @@ const ownerOrHR = (paramName = 'id') => {
 
     const resourceId = req.params[paramName];
     const isOwner = req.user.employeeId === resourceId || req.user.id === resourceId;
-    const isPrivileged = req.user.role === 'hr';
+    const isPrivileged = isPrivilegedRole(req.user.role);
 
     if (!isOwner && !isPrivileged) {
       return next(new ForbiddenError('You do not have permission to access this resource'));
@@ -224,6 +203,7 @@ module.exports = {
   optionalAuth,
   restrictTo,
   hrOnly,
+  hrOrAdmin,
   ownerOrHR,
   extractClientInfo,
 };

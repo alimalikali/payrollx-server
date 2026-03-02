@@ -1,7 +1,10 @@
 const ROLES = {
+  ADMIN: 'admin',
   HR: 'hr',
   EMPLOYEE: 'employee',
 };
+
+const PRIVILEGED_ROLES = [ROLES.ADMIN, ROLES.HR];
 
 const PERMISSIONS = {
   EMPLOYEE_CREATE: 'employee:create',
@@ -21,6 +24,7 @@ const PERMISSIONS = {
 };
 
 const rolePermissions = {
+  [ROLES.ADMIN]: Object.values(PERMISSIONS),
   [ROLES.HR]: Object.values(PERMISSIONS),
   [ROLES.EMPLOYEE]: [
     PERMISSIONS.PROFILE_VIEW_SELF,
@@ -32,10 +36,13 @@ const rolePermissions = {
 };
 
 const getPermissionsForRole = (role) => rolePermissions[role] || [];
+const isPrivilegedRole = (role) => PRIVILEGED_ROLES.includes(role);
 
 module.exports = {
   ROLES,
+  PRIVILEGED_ROLES,
   PERMISSIONS,
   rolePermissions,
   getPermissionsForRole,
+  isPrivilegedRole,
 };

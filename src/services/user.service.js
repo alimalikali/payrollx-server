@@ -1,11 +1,11 @@
 const db = require('../config/database');
 const { BadRequestError, NotFoundError } = require('../utils/errors');
 
-const VALID_ROLES = ['hr', 'employee'];
+const VALID_ROLES = ['admin', 'hr', 'employee'];
 
 const assignRole = async ({ targetUserId, newRole, changedBy, reason }) => {
   if (!VALID_ROLES.includes(newRole)) {
-    throw new BadRequestError('Invalid role. Allowed roles: hr, employee');
+    throw new BadRequestError('Invalid role. Allowed roles: admin, hr, employee');
   }
 
   const client = await db.getClient();
@@ -33,19 +33,19 @@ const assignRole = async ({ targetUserId, newRole, changedBy, reason }) => {
       };
     }
 
-    // Prevent lockout by retaining at least one active HR user.
-    if (user.role === 'hr' && newRole !== 'hr') {
-      const hrCountResult = await client.query(
+    // Prevent lockout by retaining at least one active privileged user.
+    if (['admin', 'hr'].includes(user.role) && !['admin', 'hr'].includes(newRole)) {
+      const privilegedCountResult = await client.query(
         `SELECT COUNT(*) AS count
          FROM users
-         WHERE role = 'hr'
+         WHERE role IN ('admin', 'hr')
            AND is_active = true
            AND id <> $1`,
         [targetUserId]
       );
-      const remainingHrCount = parseInt(hrCountResult.rows[0].count, 10);
-      if (remainingHrCount === 0) {
-        throw new BadRequestError('Cannot remove the last active HR user');
+      const remainingPrivilegedCount = parseInt(privilegedCountResult.rows[0].count, 10);
+      if (remainingPrivilegedCount === 0) {
+        throw new BadRequestError('Cannot remove the last active admin or HR user');
       }
     }
 

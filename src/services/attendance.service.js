@@ -6,6 +6,7 @@
 const db = require('../config/database');
 const { NotFoundError, BadRequestError } = require('../utils/errors');
 const { transformAttendance, transformAttendanceList } = require('../utils/transformers');
+const { formatLocalDate, formatLocalTime } = require('../utils/dateTime');
 
 /**
  * Get attendance records with filters
@@ -114,7 +115,8 @@ const getAttendanceById = async (id) => {
  * Mark attendance (check-in)
  */
 const checkIn = async ({ employeeId, checkInLocation, markedBy }) => {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = formatLocalDate(now);
 
   // Check if already checked in today
   const existing = await db.query(
@@ -126,9 +128,9 @@ const checkIn = async ({ employeeId, checkInLocation, markedBy }) => {
     throw new BadRequestError('Already checked in for today');
   }
 
-  const now = new Date().toTimeString().split(' ')[0];
   const workStartTime = '09:00:00';
-  const status = now > workStartTime ? 'late' : 'present';
+  const currentTime = formatLocalTime(now);
+  const status = currentTime > workStartTime ? 'late' : 'present';
 
   if (existing.rows.length > 0) {
     // Update existing record
@@ -137,7 +139,7 @@ const checkIn = async ({ employeeId, checkInLocation, markedBy }) => {
        SET check_in = $1, status = $2, check_in_location = $3
        WHERE id = $4
        RETURNING *`,
-      [now, status, checkInLocation, existing.rows[0].id]
+      [currentTime, status, checkInLocation, existing.rows[0].id]
     );
     return getAttendanceById(result.rows[0].id);
   }
@@ -147,7 +149,7 @@ const checkIn = async ({ employeeId, checkInLocation, markedBy }) => {
     `INSERT INTO attendance (employee_id, date, check_in, status, check_in_location, marked_by)
      VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING *`,
-    [employeeId, today, now, status, checkInLocation, markedBy]
+    [employeeId, today, currentTime, status, checkInLocation, markedBy]
   );
 
   return getAttendanceById(result.rows[0].id);
@@ -157,7 +159,8 @@ const checkIn = async ({ employeeId, checkInLocation, markedBy }) => {
  * Mark attendance (check-out)
  */
 const checkOut = async ({ employeeId, checkOutLocation }) => {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date();
+  const today = formatLocalDate(now);
 
   // Get today's attendance
   const existing = await db.query(
@@ -173,14 +176,14 @@ const checkOut = async ({ employeeId, checkOutLocation }) => {
     throw new BadRequestError('Already checked out for today');
   }
 
-  const now = new Date().toTimeString().split(' ')[0];
+  const currentTime = formatLocalTime(now);
 
   const result = await db.query(
     `UPDATE attendance
      SET check_out = $1, check_out_location = $2
      WHERE id = $3
      RETURNING *`,
-    [now, checkOutLocation, existing.rows[0].id]
+    [currentTime, checkOutLocation, existing.rows[0].id]
   );
 
   return getAttendanceById(result.rows[0].id);
@@ -256,7 +259,7 @@ const getEmployeeSummary = async (employeeId, month, year) => {
  * Get daily attendance stats
  */
 const getDailyStats = async (date) => {
-  const targetDate = date || new Date().toISOString().split('T')[0];
+  const targetDate = date || formatLocalDate(new Date());
 
   const query = `
     SELECT

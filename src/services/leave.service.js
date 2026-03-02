@@ -7,6 +7,36 @@ const db = require('../config/database');
 const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/errors');
 const { transformLeaveRequest, transformLeaveRequestList } = require('../utils/transformers');
 const notificationService = require('./notification.service');
+const { PRIVILEGED_ROLES } = require('../domain/permissions');
+
+const getPrivilegedUserIds = async () => {
+  const result = await db.query(
+    `SELECT id
+     FROM users
+     WHERE role = ANY($1::text[]) AND is_active = true`,
+    [PRIVILEGED_ROLES]
+  );
+
+  return result.rows.map((row) => row.id);
+};
+
+const notifyPrivilegedUsers = async ({ type, title, message, entityId }) => {
+  const privilegedUserIds = await getPrivilegedUserIds();
+  if (privilegedUserIds.length === 0) {
+    return;
+  }
+
+  await notificationService.createBulkNotifications(
+    privilegedUserIds.map((userId) => ({
+      userId,
+      type,
+      title,
+      message,
+      entityType: 'leave_request',
+      entityId,
+    }))
+  );
+};
 
 /**
  * Get leave requests with filters
@@ -218,22 +248,12 @@ const createLeaveRequest = async ({
       : 'An employee';
     const leaveTypeName = info?.leave_type_name || 'Leave';
 
-    const hrUsersResult = await db.query(
-      `SELECT id
-       FROM users
-       WHERE role = 'hr' AND is_active = true`
-    );
-
-    await notificationService.createBulkNotifications(
-      hrUsersResult.rows.map((user) => ({
-        userId: user.id,
-        type: 'leave_request_submitted',
-        title: 'New leave request',
-        message: `${employeeName} applied for ${leaveTypeName} (${totalDays} day${totalDays > 1 ? 's' : ''}).`,
-        entityType: 'leave_request',
-        entityId: result.rows[0].id,
-      }))
-    );
+    await notifyPrivilegedUsers({
+      type: 'leave_request_submitted',
+      title: 'New leave request',
+      message: `${employeeName} applied for ${leaveTypeName} (${totalDays} day${totalDays > 1 ? 's' : ''}).`,
+      entityId: result.rows[0].id,
+    });
   }
 
   return getLeaveRequestById(result.rows[0].id);
@@ -273,11 +293,19 @@ const approveLeaveRequest = async (id, approvedBy) => {
       userId: request.rows[0].user_id,
       type: 'leave_request_approved',
       title: 'Leave request approved',
-      message: `Your ${request.rows[0].leave_type_name} request has been approved${employeeName ? ` for ${employeeName}` : ''}.`,
+      message: `Your ${request.rows[0].leave_type_name} request has been approved.`,
       entityType: 'leave_request',
       entityId: id,
     });
   }
+
+  const employeeName = `${request.rows[0].first_name || ''} ${request.rows[0].last_name || ''}`.trim() || 'An employee';
+  await notifyPrivilegedUsers({
+    type: 'leave_request_approved',
+    title: 'Leave request approved',
+    message: `${employeeName}'s ${request.rows[0].leave_type_name} request was approved.`,
+    entityId: id,
+  });
 
   return getLeaveRequestById(id);
 };
@@ -321,6 +349,14 @@ const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
     });
   }
 
+  const employeeName = `${request.rows[0].first_name || ''} ${request.rows[0].last_name || ''}`.trim() || 'An employee';
+  await notifyPrivilegedUsers({
+    type: 'leave_request_rejected',
+    title: 'Leave request rejected',
+    message: `${employeeName}'s ${request.rows[0].leave_type_name} request was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
+    entityId: id,
+  });
+
   return getLeaveRequestById(id);
 };
 
@@ -330,7 +366,11 @@ const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
 const cancelLeaveRequest = async (id, userId, options = {}) => {
   const { isEmployee = false, employeeId = null } = options;
   const request = await db.query(
-    'SELECT * FROM leave_requests WHERE id = $1',
+    `SELECT lr.*, e.user_id, e.first_name, e.last_name, lt.name AS leave_type_name
+     FROM leave_requests lr
+     JOIN employees e ON e.id = lr.employee_id
+     JOIN leave_types lt ON lt.id = lr.leave_type_id
+     WHERE lr.id = $1`,
     [id]
   );
 
@@ -350,6 +390,27 @@ const cancelLeaveRequest = async (id, userId, options = {}) => {
     `UPDATE leave_requests SET status = 'cancelled' WHERE id = $1`,
     [id]
   );
+
+  const employeeName = `${request.rows[0].first_name || ''} ${request.rows[0].last_name || ''}`.trim() || 'An employee';
+  const privilegedMessage = `${employeeName}'s ${request.rows[0].leave_type_name} request was cancelled.`;
+
+  if (!isEmployee && request.rows[0].user_id) {
+    await notificationService.createNotification({
+      userId: request.rows[0].user_id,
+      type: 'leave_request_cancelled',
+      title: 'Leave request cancelled',
+      message: `Your ${request.rows[0].leave_type_name} request was cancelled.`,
+      entityType: 'leave_request',
+      entityId: id,
+    });
+  }
+
+  await notifyPrivilegedUsers({
+    type: 'leave_request_cancelled',
+    title: 'Leave request cancelled',
+    message: privilegedMessage,
+    entityId: id,
+  });
 
   return getLeaveRequestById(id);
 };

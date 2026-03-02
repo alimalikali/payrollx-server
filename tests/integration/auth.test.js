@@ -157,6 +157,18 @@ describe('Auth API', () => {
         role: 'employee',
       });
 
+      db.query.mockResolvedValueOnce({
+        rows: [{
+          id: 'test-user-id',
+          email: 'test@example.com',
+          role: 'employee',
+          is_active: true,
+          must_change_password: false,
+          employee_row_id: null,
+          employee_code: null,
+        }],
+      });
+
       const response = await request(app)
         .post('/api/v1/auth/change-password')
         .set('Authorization', `Bearer ${token}`)

@@ -8,17 +8,57 @@ const { v4: uuidv4 } = require('uuid');
 const db = require('../config/database');
 const { hashToken, generateTokenPair, getRefreshTokenExpiry } = require('../utils/jwt');
 const { UnauthorizedError, BadRequestError, NotFoundError } = require('../utils/errors');
+const { getPermissionsForRole } = require('../domain/permissions');
 
 const SALT_ROUNDS = 12;
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const normalizeEmail = (email = '') => String(email).trim().toLowerCase();
+
+const buildPasswordCandidates = (password) => {
+  if (typeof password !== 'string') {
+    return [password];
+  }
+
+  const trimmedPassword = password.trim();
+  return trimmedPassword !== password
+    ? [password, trimmedPassword]
+    : [password];
+};
+
+const matchesPasswordHash = async (password, passwordHash) => {
+  const candidates = buildPasswordCandidates(password);
+
+  for (const candidate of candidates) {
+    if (typeof candidate !== 'string' || candidate.length === 0) {
+      continue;
+    }
+
+    if (await bcrypt.compare(candidate, passwordHash)) {
+      return true;
+    }
+  }
+
+  return false;
+};
 
 /**
  * Register a new user
  */
 const register = async ({ email, password, role = 'employee' }) => {
+  if (!['hr', 'employee'].includes(role)) {
+    throw new BadRequestError('Role must be hr or employee');
+  }
+
+  const normalizedEmail = normalizeEmail(email);
+  if (!EMAIL_REGEX.test(normalizedEmail)) {
+    throw new BadRequestError('Please provide a valid email');
+  }
+
   // Check if user exists
   const existingUser = await db.query(
     'SELECT id FROM users WHERE email = $1',
-    [email.toLowerCase()]
+    [normalizedEmail]
   );
 
   if (existingUser.rows.length > 0) {
@@ -30,10 +70,10 @@ const register = async ({ email, password, role = 'employee' }) => {
 
   // Create user
   const result = await db.query(
-    `INSERT INTO users (email, password_hash, role)
-     VALUES ($1, $2, $3)
+    `INSERT INTO users (email, password_hash, role, must_change_password)
+     VALUES ($1, $2, $3, true)
      RETURNING id, email, role, is_active, created_at`,
-    [email.toLowerCase(), passwordHash, role]
+    [normalizedEmail, passwordHash, role]
   );
 
   return result.rows[0];
@@ -43,16 +83,18 @@ const register = async ({ email, password, role = 'employee' }) => {
  * Login user and generate tokens
  */
 const login = async ({ email, password, ipAddress, userAgent }) => {
+  const normalizedEmail = normalizeEmail(email);
+
   // Find user
   const result = await db.query(
-    'SELECT id, email, password_hash, role, is_active FROM users WHERE email = $1',
-    [email.toLowerCase()]
+    'SELECT id, email, password_hash, role, is_active, must_change_password FROM users WHERE email = $1',
+    [normalizedEmail]
   );
 
   const user = result.rows[0];
 
   if (!user) {
-    await logSecurityEvent(null, 'login_failed', ipAddress, userAgent, { reason: 'user_not_found', email });
+    await logSecurityEvent(null, 'login_failed', ipAddress, userAgent, { reason: 'user_not_found', email: normalizedEmail });
     throw new UnauthorizedError('Invalid email or password');
   }
 
@@ -62,7 +104,7 @@ const login = async ({ email, password, ipAddress, userAgent }) => {
   }
 
   // Verify password
-  const isValidPassword = await bcrypt.compare(password, user.password_hash);
+  const isValidPassword = await matchesPasswordHash(password, user.password_hash);
 
   if (!isValidPassword) {
     await logSecurityEvent(user.id, 'login_failed', ipAddress, userAgent, { reason: 'invalid_password' });
@@ -96,6 +138,8 @@ const login = async ({ email, password, ipAddress, userAgent }) => {
       id: user.id,
       email: user.email,
       role: user.role,
+      permissions: getPermissionsForRole(user.role),
+      mustChangePassword: user.must_change_password,
     },
     tokens,
   };
@@ -110,7 +154,7 @@ const refreshAccessToken = async ({ refreshToken, ipAddress, userAgent }) => {
 
   // Find the refresh token
   const result = await db.query(
-    `SELECT rt.*, u.id as user_id, u.email, u.role, u.is_active
+    `SELECT rt.*, u.id as user_id, u.email, u.role, u.is_active, u.must_change_password
      FROM refresh_tokens rt
      JOIN users u ON rt.user_id = u.id
      WHERE rt.token_hash = $1`,
@@ -174,7 +218,11 @@ const refreshAccessToken = async ({ refreshToken, ipAddress, userAgent }) => {
   await logSecurityEvent(user.id, 'token_refresh', ipAddress, userAgent);
 
   return {
-    user,
+    user: {
+      ...user,
+      permissions: getPermissionsForRole(user.role),
+      mustChangePassword: storedToken.must_change_password,
+    },
     tokens,
   };
 };
@@ -230,18 +278,24 @@ const changePassword = async ({ userId, currentPassword, newPassword, ipAddress,
   }
 
   // Verify current password
-  const isValid = await bcrypt.compare(currentPassword, result.rows[0].password_hash);
+  const isValid = await matchesPasswordHash(currentPassword, result.rows[0].password_hash);
 
   if (!isValid) {
-    throw new BadRequestError('Current password is incorrect');
+    throw new BadRequestError('Current password is incorrect. Please re-enter it without extra spaces.');
+  }
+
+  const normalizedNewPassword = typeof newPassword === 'string' ? newPassword.trim() : newPassword;
+
+  if (!normalizedNewPassword) {
+    throw new BadRequestError('New password is required');
   }
 
   // Hash new password
-  const newPasswordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
+  const newPasswordHash = await bcrypt.hash(normalizedNewPassword, SALT_ROUNDS);
 
   // Update password
   await db.query(
-    'UPDATE users SET password_hash = $1 WHERE id = $2',
+    'UPDATE users SET password_hash = $1, must_change_password = false WHERE id = $2',
     [newPasswordHash, userId]
   );
 
@@ -261,7 +315,7 @@ const changePassword = async ({ userId, currentPassword, newPassword, ipAddress,
  */
 const getUserById = async (userId) => {
   const result = await db.query(
-    `SELECT u.id, u.email, u.role, u.is_active, u.last_login, u.created_at,
+    `SELECT u.id, u.email, u.role, u.is_active, u.must_change_password, u.last_login, u.created_at,
             e.id as employee_id, e.first_name, e.last_name, e.profile_image
      FROM users u
      LEFT JOIN employees e ON e.user_id = u.id
@@ -279,7 +333,9 @@ const getUserById = async (userId) => {
     id: user.id,
     email: user.email,
     role: user.role,
+    permissions: getPermissionsForRole(user.role),
     isActive: user.is_active,
+    mustChangePassword: user.must_change_password,
     lastLogin: user.last_login,
     createdAt: user.created_at,
     employee: user.employee_id ? {

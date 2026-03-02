@@ -4,7 +4,7 @@
 
 const express = require('express');
 const aiController = require('../controllers/ai.controller');
-const { protect, hrOrAdmin, adminOnly } = require('../middleware/auth');
+const { protect, hrOnly } = require('../middleware/auth');
 const { commonValidation, body, handleValidation } = require('../middleware/validate');
 
 const router = express.Router();
@@ -34,24 +34,24 @@ router.get('/employee/me', aiController.getEmployeeInsights);
 router.post('/chatbot', chatValidation, aiController.sendChatMessage);
 router.get('/chatbot/history/:sessionId', commonValidation.uuid('sessionId')[0], aiController.getChatHistory);
 
-// Alerts (HR/Admin)
-router.get('/alerts', hrOrAdmin, aiController.getAlerts);
-router.patch('/alerts/:id', hrOrAdmin, commonValidation.uuid('id')[0], alertStatusValidation, aiController.updateAlertStatus);
+// Alerts (HR only)
+router.get('/alerts', hrOnly, aiController.getAlerts);
+router.patch('/alerts/:id', hrOnly, commonValidation.uuid('id')[0], alertStatusValidation, aiController.updateAlertStatus);
 
-// Fraud Detection (Admin only)
-router.post('/fraud-detection/run', adminOnly, aiController.runFraudDetection);
-router.get('/fraud-detection/stats', hrOrAdmin, aiController.getFraudStats);
+// Fraud Detection (HR only)
+router.post('/fraud-detection/run', hrOnly, aiController.runFraudDetection);
+router.get('/fraud-detection/stats', hrOnly, aiController.getFraudStats);
 
-// Salary Anomaly (HR/Admin)
-router.post('/salary-anomaly/detect', hrOrAdmin, aiController.detectSalaryAnomalies);
-router.get('/salary-anomaly/distribution', hrOrAdmin, aiController.getSalaryDistribution);
+// Salary Anomaly (HR only)
+router.post('/salary-anomaly/detect', hrOnly, aiController.detectSalaryAnomalies);
+router.get('/salary-anomaly/distribution', hrOnly, aiController.getSalaryDistribution);
 
-// Payroll Forecast (HR/Admin)
-router.get('/forecast', hrOrAdmin, aiController.generateForecast);
-router.get('/forecast/budget-comparison', hrOrAdmin, aiController.getBudgetComparison);
+// Payroll Forecast (HR only)
+router.get('/forecast', hrOnly, aiController.generateForecast);
+router.get('/forecast/budget-comparison', hrOnly, aiController.getBudgetComparison);
 
-// Salary Recommendations (HR/Admin)
-router.get('/salary-recommendations', hrOrAdmin, aiController.getBulkRecommendations);
-router.get('/salary-recommendations/:employeeId', hrOrAdmin, commonValidation.uuid('employeeId')[0], aiController.getSalaryRecommendation);
+// Salary Recommendations (HR only)
+router.get('/salary-recommendations', hrOnly, aiController.getBulkRecommendations);
+router.get('/salary-recommendations/:employeeId', hrOnly, commonValidation.uuid('employeeId')[0], aiController.getSalaryRecommendation);
 
 module.exports = router;

@@ -28,31 +28,21 @@ async function seed() {
 
     await client.query('BEGIN');
 
-    // 1. Create admin user
-    console.log('→ Creating admin user...');
-    const adminPassword = await bcrypt.hash('Admin@123', SALT_ROUNDS);
-    const adminResult = await client.query(`
-      INSERT INTO users (email, password_hash, role)
-      VALUES ('admin@payrollx.com', $1, 'admin')
-      ON CONFLICT (email) DO UPDATE SET password_hash = $1
-      RETURNING id
-    `, [adminPassword]);
-    const adminId = adminResult.rows[0].id;
-    console.log('  ✓ Admin user created (admin@payrollx.com / Admin@123)');
-
-    // 2. Create HR user
+    // 1. Create HR user
     console.log('→ Creating HR user...');
     const hrPassword = await bcrypt.hash('Hr@123456', SALT_ROUNDS);
     const hrResult = await client.query(`
-      INSERT INTO users (email, password_hash, role)
-      VALUES ('hr@payrollx.com', $1, 'hr')
-      ON CONFLICT (email) DO UPDATE SET password_hash = $1
+      INSERT INTO users (email, password_hash, role, must_change_password)
+      VALUES ('hr@payrollx.com', $1, 'hr', true)
+      ON CONFLICT (email) DO UPDATE SET
+        password_hash = $1,
+        must_change_password = true
       RETURNING id
     `, [hrPassword]);
     const hrId = hrResult.rows[0].id;
     console.log('  ✓ HR user created (hr@payrollx.com / Hr@123456)');
 
-    // 3. Get departments
+    // 2. Get departments
     console.log('→ Fetching departments...');
     const deptResult = await client.query('SELECT id, code FROM departments');
     const departments = {};
@@ -61,7 +51,7 @@ async function seed() {
     }
     console.log(`  ✓ Found ${Object.keys(departments).length} departments`);
 
-    // 4. Create sample employees
+    // 3. Create sample employees
     console.log('→ Creating sample employees...');
     const employees = [
       { firstName: 'Ahmad', lastName: 'Khan', email: 'ahmad.khan@payrollx.com', dept: 'ENG', designation: 'Senior Software Engineer', salary: 250000 },
@@ -83,9 +73,11 @@ async function seed() {
       // Create employee user
       const userPassword = await bcrypt.hash('Employee@123', SALT_ROUNDS);
       const userResult = await client.query(`
-        INSERT INTO users (email, password_hash, role)
-        VALUES ($1, $2, 'employee')
-        ON CONFLICT (email) DO UPDATE SET password_hash = $2
+        INSERT INTO users (email, password_hash, role, must_change_password)
+        VALUES ($1, $2, 'employee', true)
+        ON CONFLICT (email) DO UPDATE SET
+          password_hash = $2,
+          must_change_password = true
         RETURNING id
       `, [emp.email, userPassword]);
 
@@ -129,7 +121,7 @@ async function seed() {
     }
     console.log(`  ✓ Created ${employees.length} employees`);
 
-    // 5. Create leave allocations
+    // 4. Create leave allocations
     console.log('→ Creating leave allocations...');
     const leaveTypesResult = await client.query('SELECT id, days_per_year FROM leave_types');
     const currentYear = new Date().getFullYear();
@@ -145,7 +137,7 @@ async function seed() {
     }
     console.log(`  ✓ Leave allocations created for ${currentYear}`);
 
-    // 6. Create sample attendance for current month
+    // 5. Create sample attendance for current month
     console.log('→ Creating sample attendance...');
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -177,9 +169,8 @@ async function seed() {
     console.log('========================================');
     console.log('\n  Test Accounts:');
     console.log('  ─────────────────────────────────────');
-    console.log('  Admin:    admin@payrollx.com / Admin@123');
-    console.log('  HR:       hr@payrollx.com / Hr@123456');
-    console.log('  Employee: ahmad.khan@payrollx.com / Employee@123');
+    console.log('  HR:       hr@payrollx.com / Hr@123456 (change required on first login)');
+    console.log('  Employee: ahmad.khan@payrollx.com / Employee@123 (change required on first login)');
     console.log('\n========================================\n');
 
   } catch (error) {

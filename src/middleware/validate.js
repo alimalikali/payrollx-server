@@ -45,8 +45,8 @@ const authValidation = {
       .withMessage('Password must contain at least one number'),
     body('role')
       .optional()
-      .isIn(['admin', 'hr', 'employee'])
-      .withMessage('Role must be admin, hr, or employee'),
+      .isIn(['hr', 'employee'])
+      .withMessage('Role must be hr or employee'),
     handleValidation,
   ],
 
@@ -80,8 +80,15 @@ const authValidation = {
 
   refreshToken: [
     body('refreshToken')
-      .notEmpty()
-      .withMessage('Refresh token is required'),
+      .optional()
+      .isString()
+      .withMessage('Refresh token must be a string'),
+    body('refreshToken').custom((value, { req }) => {
+      if (!value && !req.cookies?.refreshToken) {
+        throw new Error('Refresh token is required');
+      }
+      return true;
+    }),
     handleValidation,
   ],
 };

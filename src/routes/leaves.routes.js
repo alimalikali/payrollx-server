@@ -4,7 +4,7 @@
 
 const express = require('express');
 const leaveController = require('../controllers/leave.controller');
-const { protect, hrOrAdmin } = require('../middleware/auth');
+const { protect, hrOnly, ownerOrHR } = require('../middleware/auth');
 const { commonValidation, body, handleValidation } = require('../middleware/validate');
 
 const router = express.Router();
@@ -41,11 +41,11 @@ const leaveValidation = {
 
 // Static routes (must be before :id routes)
 router.get('/types', leaveController.getLeaveTypes);
-router.get('/pending-count', hrOrAdmin, leaveController.getPendingCount);
-router.get('/balance/:employeeId', commonValidation.uuid('employeeId')[0], leaveController.getLeaveBalance);
+router.get('/pending-count', hrOnly, leaveController.getPendingCount);
+router.get('/balance/:employeeId', commonValidation.uuid('employeeId')[0], ownerOrHR('employeeId'), leaveController.getLeaveBalance);
 
-// Allocation (admin only)
-router.post('/allocate', hrOrAdmin, leaveValidation.allocate, leaveController.allocateLeave);
+// Allocation (HR only)
+router.post('/allocate', hrOnly, leaveValidation.allocate, leaveController.allocateLeave);
 
 // CRUD routes
 router.get('/', leaveController.getLeaveRequests);
@@ -53,8 +53,8 @@ router.post('/', leaveValidation.create, leaveController.createLeaveRequest);
 router.get('/:id', commonValidation.uuid('id')[0], leaveController.getLeaveRequest);
 
 // Approval workflow
-router.post('/:id/approve', hrOrAdmin, commonValidation.uuid('id')[0], leaveController.approveLeaveRequest);
-router.post('/:id/reject', hrOrAdmin, commonValidation.uuid('id')[0], leaveValidation.reject, leaveController.rejectLeaveRequest);
+router.post('/:id/approve', hrOnly, commonValidation.uuid('id')[0], leaveController.approveLeaveRequest);
+router.post('/:id/reject', hrOnly, commonValidation.uuid('id')[0], leaveValidation.reject, leaveController.rejectLeaveRequest);
 router.post('/:id/cancel', commonValidation.uuid('id')[0], leaveController.cancelLeaveRequest);
 
 module.exports = router;

@@ -6,6 +6,7 @@
 const db = require('../config/database');
 const { NotFoundError, BadRequestError, ForbiddenError } = require('../utils/errors');
 const { transformLeaveRequest, transformLeaveRequestList } = require('../utils/transformers');
+const notificationService = require('./notification.service');
 
 /**
  * Get leave requests with filters
@@ -126,7 +127,17 @@ const getLeaveRequestById = async (id) => {
 /**
  * Create leave request
  */
-const createLeaveRequest = async ({ employeeId, leaveTypeId, startDate, endDate, reason, isHalfDay, halfDayType, attachmentUrl }) => {
+const createLeaveRequest = async ({
+  employeeId,
+  leaveTypeId,
+  startDate,
+  endDate,
+  reason,
+  isHalfDay,
+  halfDayType,
+  attachmentUrl,
+  requestedByRole,
+}) => {
   // Validate dates
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -192,6 +203,39 @@ const createLeaveRequest = async ({ employeeId, leaveTypeId, startDate, endDate,
     [employeeId, leaveTypeId, startDate, endDate, totalDays, isHalfDay || false, halfDayType, reason, attachmentUrl]
   );
 
+  if (requestedByRole === 'employee') {
+    const requestInfoResult = await db.query(
+      `SELECT e.first_name, e.last_name, lt.name AS leave_type_name
+       FROM employees e
+       JOIN leave_types lt ON lt.id = $1
+       WHERE e.id = $2`,
+      [leaveTypeId, employeeId]
+    );
+
+    const info = requestInfoResult.rows[0];
+    const employeeName = info
+      ? `${info.first_name || ''} ${info.last_name || ''}`.trim()
+      : 'An employee';
+    const leaveTypeName = info?.leave_type_name || 'Leave';
+
+    const hrUsersResult = await db.query(
+      `SELECT id
+       FROM users
+       WHERE role = 'hr' AND is_active = true`
+    );
+
+    await notificationService.createBulkNotifications(
+      hrUsersResult.rows.map((user) => ({
+        userId: user.id,
+        type: 'leave_request_submitted',
+        title: 'New leave request',
+        message: `${employeeName} applied for ${leaveTypeName} (${totalDays} day${totalDays > 1 ? 's' : ''}).`,
+        entityType: 'leave_request',
+        entityId: result.rows[0].id,
+      }))
+    );
+  }
+
   return getLeaveRequestById(result.rows[0].id);
 };
 
@@ -200,7 +244,11 @@ const createLeaveRequest = async ({ employeeId, leaveTypeId, startDate, endDate,
  */
 const approveLeaveRequest = async (id, approvedBy) => {
   const request = await db.query(
-    'SELECT * FROM leave_requests WHERE id = $1',
+    `SELECT lr.*, e.user_id, e.first_name, e.last_name, lt.name AS leave_type_name
+     FROM leave_requests lr
+     JOIN employees e ON e.id = lr.employee_id
+     JOIN leave_types lt ON lt.id = lr.leave_type_id
+     WHERE lr.id = $1`,
     [id]
   );
 
@@ -219,6 +267,18 @@ const approveLeaveRequest = async (id, approvedBy) => {
     [approvedBy, id]
   );
 
+  if (request.rows[0].user_id) {
+    const employeeName = `${request.rows[0].first_name || ''} ${request.rows[0].last_name || ''}`.trim();
+    await notificationService.createNotification({
+      userId: request.rows[0].user_id,
+      type: 'leave_request_approved',
+      title: 'Leave request approved',
+      message: `Your ${request.rows[0].leave_type_name} request has been approved${employeeName ? ` for ${employeeName}` : ''}.`,
+      entityType: 'leave_request',
+      entityId: id,
+    });
+  }
+
   return getLeaveRequestById(id);
 };
 
@@ -227,7 +287,11 @@ const approveLeaveRequest = async (id, approvedBy) => {
  */
 const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
   const request = await db.query(
-    'SELECT * FROM leave_requests WHERE id = $1',
+    `SELECT lr.*, e.user_id, lt.name AS leave_type_name
+     FROM leave_requests lr
+     JOIN employees e ON e.id = lr.employee_id
+     JOIN leave_types lt ON lt.id = lr.leave_type_id
+     WHERE lr.id = $1`,
     [id]
   );
 
@@ -245,6 +309,17 @@ const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
      WHERE id = $3`,
     [approvedBy, rejectionReason, id]
   );
+
+  if (request.rows[0].user_id) {
+    await notificationService.createNotification({
+      userId: request.rows[0].user_id,
+      type: 'leave_request_rejected',
+      title: 'Leave request rejected',
+      message: `Your ${request.rows[0].leave_type_name} request was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
+      entityType: 'leave_request',
+      entityId: id,
+    });
+  }
 
   return getLeaveRequestById(id);
 };

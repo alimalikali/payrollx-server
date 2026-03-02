@@ -13,6 +13,102 @@ const pool = new Pool({
   connectionTimeoutMillis: config.db.connectionTimeoutMillis,
 });
 
+let schemaCompatibilityPromise = null;
+
+const ensureSchemaCompatibility = async () => {
+  if (!schemaCompatibilityPromise) {
+    schemaCompatibilityPromise = (async () => {
+      // Keep legacy databases compatible with auth queries that require this column.
+      await pool.query(`
+        ALTER TABLE IF EXISTS users
+        ADD COLUMN IF NOT EXISTS must_change_password BOOLEAN NOT NULL DEFAULT false
+      `);
+
+      // Keep notifications queries stable when an older database is missing table/schema.
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS notifications (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+          type VARCHAR(50) NOT NULL CHECK (
+            type IN (
+              'leave_request_submitted',
+              'leave_request_approved',
+              'leave_request_rejected',
+              'leave_request_cancelled'
+            )
+          ),
+          title VARCHAR(255) NOT NULL,
+          message TEXT NOT NULL,
+          entity_type VARCHAR(50),
+          entity_id UUID,
+          is_read BOOLEAN DEFAULT false,
+          read_at TIMESTAMP,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS notifications
+        ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS notifications
+        ADD COLUMN IF NOT EXISTS read_at TIMESTAMP
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS notifications
+        ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_notifications_user
+        ON notifications(user_id)
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_notifications_user_unread
+        ON notifications(user_id, is_read)
+      `);
+
+      await pool.query(`
+        CREATE INDEX IF NOT EXISTS idx_notifications_created
+        ON notifications(created_at)
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS employees
+        ADD COLUMN IF NOT EXISTS full_name_display VARCHAR(255),
+        ADD COLUMN IF NOT EXISTS nationality VARCHAR(100),
+        ADD COLUMN IF NOT EXISTS residential_address TEXT,
+        ADD COLUMN IF NOT EXISTS probation_period_months INTEGER,
+        ADD COLUMN IF NOT EXISTS work_location VARCHAR(120),
+        ADD COLUMN IF NOT EXISTS job_title VARCHAR(120),
+        ADD COLUMN IF NOT EXISTS legal_id_type VARCHAR(30),
+        ADD COLUMN IF NOT EXISTS legal_id_number VARCHAR(50),
+        ADD COLUMN IF NOT EXISTS tax_identifier VARCHAR(30),
+        ADD COLUMN IF NOT EXISTS tax_information TEXT,
+        ADD COLUMN IF NOT EXISTS bank_routing_code VARCHAR(50)
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS salary_structures
+        ADD COLUMN IF NOT EXISTS bonus DECIMAL(15, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS overtime_rate DECIMAL(15, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS provident_fund_employee DECIMAL(15, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS provident_fund_employer DECIMAL(15, 2) NOT NULL DEFAULT 0,
+        ADD COLUMN IF NOT EXISTS payment_method VARCHAR(20) NOT NULL DEFAULT 'bank_transfer'
+      `);
+    })().catch((error) => {
+      schemaCompatibilityPromise = null;
+      throw error;
+    });
+  }
+
+  return schemaCompatibilityPromise;
+};
+
 // Pool error handling
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client:', err);
@@ -22,6 +118,7 @@ pool.on('error', (err) => {
 // Test database connection
 const testConnection = async () => {
   try {
+    await ensureSchemaCompatibility();
     const client = await pool.connect();
     const result = await client.query('SELECT NOW()');
     console.log('Database connected successfully at:', result.rows[0].now);
@@ -37,6 +134,7 @@ const testConnection = async () => {
 const query = async (text, params) => {
   const start = Date.now();
   try {
+    await ensureSchemaCompatibility();
     const result = await pool.query(text, params);
     const duration = Date.now() - start;
 
@@ -53,6 +151,7 @@ const query = async (text, params) => {
 
 // Get a client from the pool (for transactions)
 const getClient = async () => {
+  await ensureSchemaCompatibility();
   const client = await pool.connect();
   const originalQuery = client.query.bind(client);
   const originalRelease = client.release.bind(client);

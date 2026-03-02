@@ -7,6 +7,7 @@ const authService = require('../services/auth.service');
 const { extractClientInfo } = require('../middleware/auth');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+const { BadRequestError } = require('../utils/errors');
 
 /**
  * Register new user
@@ -61,6 +62,9 @@ const login = asyncHandler(async (req, res) => {
 const refreshToken = asyncHandler(async (req, res) => {
   // Get refresh token from cookie or body
   const token = req.cookies.refreshToken || req.body.refreshToken;
+  if (!token) {
+    throw new BadRequestError('Refresh token is required');
+  }
   const { ipAddress, userAgent } = extractClientInfo(req);
 
   const result = await authService.refreshAccessToken({

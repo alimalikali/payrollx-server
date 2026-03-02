@@ -360,6 +360,41 @@ const getPayslipById = async (id) => {
   return transformPayslip(result.rows[0]);
 };
 
+/**
+ * Get salary history for an employee
+ */
+const getSalaryHistory = async (employeeId, months = 12) => {
+  const result = await db.query(
+    `SELECT
+       id,
+       employee_id,
+       month,
+       year,
+       gross_salary,
+       total_deductions,
+       net_salary,
+       status,
+       created_at
+     FROM payslips
+     WHERE employee_id = $1
+     ORDER BY year DESC, month DESC
+     LIMIT $2`,
+    [employeeId, months]
+  );
+
+  return result.rows.map((row) => ({
+    id: row.id,
+    employeeId: row.employee_id,
+    month: row.month,
+    year: row.year,
+    grossSalary: parseFloat(row.gross_salary),
+    totalDeductions: parseFloat(row.total_deductions),
+    netSalary: parseFloat(row.net_salary),
+    status: row.status,
+    createdAt: row.created_at,
+  }));
+};
+
 // Helper functions
 
 const calculateWorkingDays = async (client, month, year) => {
@@ -484,4 +519,5 @@ module.exports = {
   approvePayroll,
   getPayslips,
   getPayslipById,
+  getSalaryHistory,
 };

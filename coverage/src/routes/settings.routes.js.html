@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>13/13</span>
+                <span class='fraction'>0/13</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -98,47 +98,47 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Settings Routes
  */
 &nbsp;
-const express = require('express');
-const settingsController = require('../controllers/settings.controller');
-const { protect, adminOnly } = require('../middleware/auth');
-const { commonValidation, body, handleValidation } = require('../middleware/validate');
+const express = <span class="cstat-no" title="statement not covered" >require('express');</span>
+const settingsController = <span class="cstat-no" title="statement not covered" >require('../controllers/settings.controller');</span>
+const { protect, hrOnly } = <span class="cstat-no" title="statement not covered" >require('../middleware/auth');</span>
+const { commonValidation, body, handleValidation } = <span class="cstat-no" title="statement not covered" >require('../middleware/validate');</span>
 &nbsp;
-const router = express.Router();
+const router = <span class="cstat-no" title="statement not covered" >express.Router();</span>
 &nbsp;
-router.use(protect);
+<span class="cstat-no" title="statement not covered" >router.use(protect);</span>
 &nbsp;
-const holidayValidation = [
+const holidayValidation = <span class="cstat-no" title="statement not covered" >[</span>
   body('name').trim().notEmpty().withMessage('Holiday name is required'),
   body('date').isISO8601().withMessage('Valid date is required'),
   body('description').optional().trim(),
@@ -146,16 +146,16 @@ const holidayValidation = [
   handleValidation,
 ];
 &nbsp;
-// Settings (Admin only)
-router.get('/', adminOnly, settingsController.getSettings);
-router.put('/', adminOnly, settingsController.updateSettings);
+// Settings (HR only)
+<span class="cstat-no" title="statement not covered" >router.get('/', hrOnly, settingsController.getSettings);</span>
+<span class="cstat-no" title="statement not covered" >router.put('/', hrOnly, settingsController.updateSettings);</span>
 &nbsp;
 // Public holidays
-router.get('/holidays', settingsController.getPublicHolidays);
-router.post('/holidays', adminOnly, holidayValidation, settingsController.addPublicHoliday);
-router.delete('/holidays/:id', adminOnly, commonValidation.uuid('id')[0], settingsController.deletePublicHoliday);
+<span class="cstat-no" title="statement not covered" >router.get('/holidays', settingsController.getPublicHolidays);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/holidays', hrOnly, holidayValidation, settingsController.addPublicHoliday);</span>
+<span class="cstat-no" title="statement not covered" >router.delete('/holidays/:id', hrOnly, commonValidation.uuid('id')[0], settingsController.deletePublicHoliday);</span>
 &nbsp;
-module.exports = router;
+<span class="cstat-no" title="statement not covered" >module.exports = router;</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -163,7 +163,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T12:28:47.622Z
+                at 2026-02-26T21:19:16.717Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

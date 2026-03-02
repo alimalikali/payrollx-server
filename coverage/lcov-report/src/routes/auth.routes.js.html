@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>15/15</span>
+                <span class='fraction'>0/15</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -93,54 +93,54 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Authentication Routes
  */
 &nbsp;
-const express = require('express');
-const authController = require('../controllers/auth.controller');
-const { protect, adminOnly } = require('../middleware/auth');
-const { authValidation } = require('../middleware/validate');
-const { authLimiter } = require('../middleware/rateLimiter');
+const express = <span class="cstat-no" title="statement not covered" >require('express');</span>
+const authController = <span class="cstat-no" title="statement not covered" >require('../controllers/auth.controller');</span>
+const { protect } = <span class="cstat-no" title="statement not covered" >require('../middleware/auth');</span>
+const { authValidation } = <span class="cstat-no" title="statement not covered" >require('../middleware/validate');</span>
+const { authLimiter } = <span class="cstat-no" title="statement not covered" >require('../middleware/rateLimiter');</span>
 &nbsp;
-const router = express.Router();
+const router = <span class="cstat-no" title="statement not covered" >express.Router();</span>
 &nbsp;
 // Public routes (with rate limiting)
-router.post('/register', authLimiter, authValidation.register, authController.register);
-router.post('/login', authLimiter, authValidation.login, authController.login);
-router.post('/refresh', authLimiter, authValidation.refreshToken, authController.refreshToken);
-router.post('/logout', authController.logout);
+<span class="cstat-no" title="statement not covered" >router.post('/register', authLimiter, authValidation.register, authController.register);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/login', authLimiter, authValidation.login, authController.login);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/refresh', authLimiter, authValidation.refreshToken, authController.refreshToken);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/logout', authController.logout);</span>
 &nbsp;
 // Protected routes
-router.use(protect); // All routes below require authentication
+<span class="cstat-no" title="statement not covered" >router.use(protect); </span>// All routes below require authentication
 &nbsp;
-router.get('/me', authController.getMe);
-router.post('/change-password', authValidation.changePassword, authController.changePassword);
-router.post('/logout-all', authController.logoutAll);
+<span class="cstat-no" title="statement not covered" >router.get('/me', authController.getMe);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/change-password', authValidation.changePassword, authController.changePassword);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/logout-all', authController.logoutAll);</span>
 &nbsp;
-module.exports = router;
+<span class="cstat-no" title="statement not covered" >module.exports = router;</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -148,7 +148,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T12:28:47.530Z
+                at 2026-02-26T21:19:16.407Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

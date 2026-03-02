@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>18/18</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>18/18</span>
+                <span class='fraction'>0/18</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -127,20 +127,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -165,40 +163,42 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Leave Routes
  */
 &nbsp;
-const express = require('express');
-const leaveController = require('../controllers/leave.controller');
-const { protect, hrOrAdmin } = require('../middleware/auth');
-const { commonValidation, body, handleValidation } = require('../middleware/validate');
+const express = <span class="cstat-no" title="statement not covered" >require('express');</span>
+const leaveController = <span class="cstat-no" title="statement not covered" >require('../controllers/leave.controller');</span>
+const { protect, hrOnly, ownerOrHR } = <span class="cstat-no" title="statement not covered" >require('../middleware/auth');</span>
+const { commonValidation, body, handleValidation } = <span class="cstat-no" title="statement not covered" >require('../middleware/validate');</span>
 &nbsp;
-const router = express.Router();
+const router = <span class="cstat-no" title="statement not covered" >express.Router();</span>
 &nbsp;
 // All routes require authentication
-router.use(protect);
+<span class="cstat-no" title="statement not covered" >router.use(protect);</span>
 &nbsp;
 // Leave validation rules
-const leaveValidation = {
+const leaveValidation = <span class="cstat-no" title="statement not covered" >{</span>
   create: [
     body('employeeId').optional().isUUID().withMessage('Invalid employee ID'),
     body('leaveTypeId').isUUID().withMessage('Leave type ID is required'),
@@ -225,24 +225,24 @@ const leaveValidation = {
 };
 &nbsp;
 // Static routes (must be before :id routes)
-router.get('/types', leaveController.getLeaveTypes);
-router.get('/pending-count', hrOrAdmin, leaveController.getPendingCount);
-router.get('/balance/:employeeId', commonValidation.uuid('employeeId')[0], leaveController.getLeaveBalance);
+<span class="cstat-no" title="statement not covered" >router.get('/types', leaveController.getLeaveTypes);</span>
+<span class="cstat-no" title="statement not covered" >router.get('/pending-count', hrOnly, leaveController.getPendingCount);</span>
+<span class="cstat-no" title="statement not covered" >router.get('/balance/:employeeId', commonValidation.uuid('employeeId')[0], ownerOrHR('employeeId'), leaveController.getLeaveBalance);</span>
 &nbsp;
-// Allocation (admin only)
-router.post('/allocate', hrOrAdmin, leaveValidation.allocate, leaveController.allocateLeave);
+// Allocation (HR only)
+<span class="cstat-no" title="statement not covered" >router.post('/allocate', hrOnly, leaveValidation.allocate, leaveController.allocateLeave);</span>
 &nbsp;
 // CRUD routes
-router.get('/', leaveController.getLeaveRequests);
-router.post('/', leaveValidation.create, leaveController.createLeaveRequest);
-router.get('/:id', commonValidation.uuid('id')[0], leaveController.getLeaveRequest);
+<span class="cstat-no" title="statement not covered" >router.get('/', leaveController.getLeaveRequests);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/', leaveValidation.create, leaveController.createLeaveRequest);</span>
+<span class="cstat-no" title="statement not covered" >router.get('/:id', commonValidation.uuid('id')[0], leaveController.getLeaveRequest);</span>
 &nbsp;
 // Approval workflow
-router.post('/:id/approve', hrOrAdmin, commonValidation.uuid('id')[0], leaveController.approveLeaveRequest);
-router.post('/:id/reject', hrOrAdmin, commonValidation.uuid('id')[0], leaveValidation.reject, leaveController.rejectLeaveRequest);
-router.post('/:id/cancel', commonValidation.uuid('id')[0], leaveController.cancelLeaveRequest);
+<span class="cstat-no" title="statement not covered" >router.post('/:id/approve', hrOnly, commonValidation.uuid('id')[0], leaveController.approveLeaveRequest);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/:id/reject', hrOnly, commonValidation.uuid('id')[0], leaveValidation.reject, leaveController.rejectLeaveRequest);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/:id/cancel', commonValidation.uuid('id')[0], leaveController.cancelLeaveRequest);</span>
 &nbsp;
-module.exports = router;
+<span class="cstat-no" title="statement not covered" >module.exports = router;</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -250,7 +250,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T12:28:47.622Z
+                at 2026-02-26T21:19:16.717Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

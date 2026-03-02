@@ -6,7 +6,11 @@
 const attendanceService = require('../services/attendance.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+<<<<<<< HEAD
 const { ForbiddenError } = require('../utils/errors');
+=======
+const { BadRequestError, ForbiddenError } = require('../utils/errors');
+>>>>>>> bdd7077 (Updated project files)
 
 /**
  * Get all attendance records
@@ -14,12 +18,27 @@ const { ForbiddenError } = require('../utils/errors');
  */
 const getAttendance = asyncHandler(async (req, res) => {
   const { page, limit, employeeId, startDate, endDate, status, date } = req.query;
+<<<<<<< HEAD
   const scopedEmployeeId = req.user.role === 'employee' ? req.user.employeeId : employeeId;
+=======
+  let targetEmployeeId = employeeId;
+
+  if (req.user.role === 'employee') {
+    if (!req.user.employeeId) {
+      throw new BadRequestError('Employee profile not linked to this account');
+    }
+    targetEmployeeId = req.user.employeeId;
+  }
+>>>>>>> bdd7077 (Updated project files)
 
   const result = await attendanceService.getAttendance({
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 10,
+<<<<<<< HEAD
     employeeId: scopedEmployeeId,
+=======
+    employeeId: targetEmployeeId,
+>>>>>>> bdd7077 (Updated project files)
     startDate,
     endDate,
     status,
@@ -50,9 +69,21 @@ const getAttendanceById = asyncHandler(async (req, res) => {
 const checkIn = asyncHandler(async (req, res) => {
   const { employeeId, checkInLocation } = req.body;
 
+<<<<<<< HEAD
   const targetEmployeeId = req.user.role === 'employee'
     ? req.user.employeeId
     : (employeeId || req.user.employeeId);
+=======
+  if (req.user.role === 'employee' && employeeId && employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You can only check in for yourself');
+  }
+
+  // Use requesting user's employee ID if not provided (self check-in)
+  const targetEmployeeId = employeeId || req.user.employeeId;
+  if (!targetEmployeeId) {
+    throw new BadRequestError('Employee ID is required');
+  }
+>>>>>>> bdd7077 (Updated project files)
 
   const attendance = await attendanceService.checkIn({
     employeeId: targetEmployeeId,
@@ -70,9 +101,20 @@ const checkIn = asyncHandler(async (req, res) => {
 const checkOut = asyncHandler(async (req, res) => {
   const { employeeId, checkOutLocation } = req.body;
 
+<<<<<<< HEAD
   const targetEmployeeId = req.user.role === 'employee'
     ? req.user.employeeId
     : (employeeId || req.user.employeeId);
+=======
+  if (req.user.role === 'employee' && employeeId && employeeId !== req.user.employeeId) {
+    throw new ForbiddenError('You can only check out for yourself');
+  }
+
+  const targetEmployeeId = employeeId || req.user.employeeId;
+  if (!targetEmployeeId) {
+    throw new BadRequestError('Employee ID is required');
+  }
+>>>>>>> bdd7077 (Updated project files)
 
   const attendance = await attendanceService.checkOut({
     employeeId: targetEmployeeId,

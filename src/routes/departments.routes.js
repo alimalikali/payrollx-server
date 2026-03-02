@@ -4,7 +4,7 @@
 
 const express = require('express');
 const departmentController = require('../controllers/department.controller');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect, hrOnly } = require('../middleware/auth');
 const { commonValidation, body, handleValidation } = require('../middleware/validate');
 
 const router = express.Router();
@@ -29,8 +29,8 @@ const departmentValidation = {
 
 router.get('/', departmentController.getDepartments);
 router.get('/:id', commonValidation.uuid('id')[0], departmentController.getDepartment);
-router.post('/', adminOnly, departmentValidation.create, departmentController.createDepartment);
-router.put('/:id', adminOnly, commonValidation.uuid('id')[0], departmentValidation.update, departmentController.updateDepartment);
-router.delete('/:id', adminOnly, commonValidation.uuid('id')[0], departmentController.deleteDepartment);
+router.post('/', hrOnly, departmentValidation.create, departmentController.createDepartment);
+router.put('/:id', hrOnly, commonValidation.uuid('id')[0], departmentValidation.update, departmentController.updateDepartment);
+router.delete('/:id', hrOnly, commonValidation.uuid('id')[0], departmentController.deleteDepartment);
 
 module.exports = router;

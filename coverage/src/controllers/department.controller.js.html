@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/20</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/20</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
@@ -115,11 +115,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -128,31 +128,31 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -163,11 +163,11 @@
  * Department Controller
  */
 &nbsp;
-const departmentService = require('../services/department.service');
-const { success } = require('../utils/apiResponse');
-const { asyncHandler } = require('../middleware/errorHandler');
+const departmentService = <span class="cstat-no" title="statement not covered" >require('../services/department.service');</span>
+const { success } = <span class="cstat-no" title="statement not covered" >require('../utils/apiResponse');</span>
+const { asyncHandler } = <span class="cstat-no" title="statement not covered" >require('../middleware/errorHandler');</span>
 &nbsp;
-const getDepartments = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const getDepartments = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const { includeInactive } = <span class="cstat-no" title="statement not covered" >req.query;</span>
   const departments = <span class="cstat-no" title="statement not covered" >await departmentService.getDepartments({</span>
     includeInactive: includeInactive === 'true',
@@ -176,31 +176,31 @@ const getDepartments = asyncHandler(<span class="fstat-no" title="function not c
 <span class="cstat-no" title="statement not covered" >  res.json(success(departments));</span>
 });
 &nbsp;
-const getDepartment = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const getDepartment = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const department = <span class="cstat-no" title="statement not covered" >await departmentService.getDepartmentById(req.params.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(department));</span>
 });
 &nbsp;
-const createDepartment = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const createDepartment = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const department = <span class="cstat-no" title="statement not covered" >await departmentService.createDepartment(req.body);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.status(201).json(success(department, 'Department created successfully'));</span>
 });
 &nbsp;
-const updateDepartment = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const updateDepartment = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const department = <span class="cstat-no" title="statement not covered" >await departmentService.updateDepartment(req.params.id, req.body);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(department, 'Department updated successfully'));</span>
 });
 &nbsp;
-const deleteDepartment = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const deleteDepartment = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  await departmentService.deleteDepartment(req.params.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(null, 'Department deleted successfully'));</span>
 });
 &nbsp;
-module.exports = {
+<span class="cstat-no" title="statement not covered" >module.exports = {</span>
   getDepartments,
   getDepartment,
   createDepartment,
@@ -214,7 +214,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T12:28:47.622Z
+                at 2026-02-26T21:19:16.717Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

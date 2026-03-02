@@ -4,7 +4,7 @@
 
 const express = require('express');
 const authController = require('../controllers/auth.controller');
-const { protect, adminOnly } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { authValidation } = require('../middleware/validate');
 const { authLimiter } = require('../middleware/rateLimiter');
 

@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>16/16</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -127,20 +127,18 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -169,36 +167,38 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Attendance Routes
  */
 &nbsp;
-const express = require('express');
-const attendanceController = require('../controllers/attendance.controller');
-const { protect, hrOrAdmin } = require('../middleware/auth');
-const { commonValidation, body, handleValidation } = require('../middleware/validate');
+const express = <span class="cstat-no" title="statement not covered" >require('express');</span>
+const attendanceController = <span class="cstat-no" title="statement not covered" >require('../controllers/attendance.controller');</span>
+const { protect, hrOnly, ownerOrHR } = <span class="cstat-no" title="statement not covered" >require('../middleware/auth');</span>
+const { commonValidation, body, handleValidation } = <span class="cstat-no" title="statement not covered" >require('../middleware/validate');</span>
 &nbsp;
-const router = express.Router();
+const router = <span class="cstat-no" title="statement not covered" >express.Router();</span>
 &nbsp;
 // All routes require authentication
-router.use(protect);
+<span class="cstat-no" title="statement not covered" >router.use(protect);</span>
 &nbsp;
 // Attendance validation rules
-const attendanceValidation = {
+const attendanceValidation = <span class="cstat-no" title="statement not covered" >{</span>
   checkIn: [
     body('employeeId').optional().isUUID().withMessage('Invalid employee ID'),
     body('checkInLocation').optional().trim(),
@@ -229,20 +229,20 @@ const attendanceValidation = {
 };
 &nbsp;
 // Self check-in/out (all authenticated users)
-router.post('/check-in', attendanceValidation.checkIn, attendanceController.checkIn);
-router.post('/check-out', attendanceValidation.checkOut, attendanceController.checkOut);
+<span class="cstat-no" title="statement not covered" >router.post('/check-in', attendanceValidation.checkIn, attendanceController.checkIn);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/check-out', attendanceValidation.checkOut, attendanceController.checkOut);</span>
 &nbsp;
 // Stats endpoints
-router.get('/daily-stats', hrOrAdmin, attendanceController.getDailyStats);
-router.get('/summary/:employeeId', commonValidation.uuid('employeeId')[0], attendanceController.getEmployeeSummary);
+<span class="cstat-no" title="statement not covered" >router.get('/daily-stats', hrOnly, attendanceController.getDailyStats);</span>
+<span class="cstat-no" title="statement not covered" >router.get('/summary/:employeeId', commonValidation.uuid('employeeId')[0], ownerOrHR('employeeId'), attendanceController.getEmployeeSummary);</span>
 &nbsp;
-// CRUD and admin operations
-router.get('/', hrOrAdmin, attendanceController.getAttendance);
-router.get('/:id', commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
-router.post('/mark', hrOrAdmin, attendanceValidation.mark, attendanceController.markAttendance);
-router.post('/bulk', hrOrAdmin, attendanceValidation.bulk, attendanceController.bulkMark);
+// Attendance access and admin operations
+<span class="cstat-no" title="statement not covered" >router.get('/', attendanceController.getAttendance);</span>
+<span class="cstat-no" title="statement not covered" >router.get('/:id', hrOnly, commonValidation.uuid('id')[0], attendanceController.getAttendanceById);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/mark', hrOnly, attendanceValidation.mark, attendanceController.markAttendance);</span>
+<span class="cstat-no" title="statement not covered" >router.post('/bulk', hrOnly, attendanceValidation.bulk, attendanceController.bulkMark);</span>
 &nbsp;
-module.exports = router;
+<span class="cstat-no" title="statement not covered" >module.exports = router;</span>
 &nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
@@ -250,7 +250,7 @@ module.exports = router;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T12:28:47.622Z
+                at 2026-02-26T21:19:16.717Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

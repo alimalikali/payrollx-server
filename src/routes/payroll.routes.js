@@ -4,7 +4,7 @@
 
 const express = require('express');
 const payrollController = require('../controllers/payroll.controller');
-const { protect, hrOrAdmin, adminOnly } = require('../middleware/auth');
+const { protect, hrOnly } = require('../middleware/auth');
 const { commonValidation, body, handleValidation } = require('../middleware/validate');
 
 const router = express.Router();
@@ -32,11 +32,14 @@ router.post('/calculate-tax', payrollValidation.calculateTax, payrollController.
 router.get('/payslips', payrollController.getPayslips);
 router.get('/payslips/:id', commonValidation.uuid('id')[0], payrollController.getPayslip);
 
-// Payroll runs (HR/Admin only)
-router.get('/runs', hrOrAdmin, payrollController.getPayrollRuns);
-router.post('/runs', hrOrAdmin, payrollValidation.create, payrollController.createPayrollRun);
-router.get('/runs/:id', hrOrAdmin, commonValidation.uuid('id')[0], payrollController.getPayrollRun);
-router.post('/runs/:id/process', hrOrAdmin, commonValidation.uuid('id')[0], payrollController.processPayroll);
-router.post('/runs/:id/approve', adminOnly, commonValidation.uuid('id')[0], payrollController.approvePayroll);
+// Payroll runs (HR only)
+router.get('/runs', hrOnly, payrollController.getPayrollRuns);
+router.post('/runs', hrOnly, payrollValidation.create, payrollController.createPayrollRun);
+router.get('/runs/:id', hrOnly, commonValidation.uuid('id')[0], payrollController.getPayrollRun);
+router.post('/runs/:id/process', hrOnly, commonValidation.uuid('id')[0], payrollController.processPayroll);
+router.post('/runs/:id/approve', hrOnly, commonValidation.uuid('id')[0], payrollController.approvePayroll);
+
+// Salary history
+router.get('/salary-history', payrollController.getSalaryHistory);
 
 module.exports = router;

@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 
 const config = require('./config');
 const routes = require('./routes');
@@ -39,9 +40,10 @@ app.use(cors({
 }));
 
 // Request parsing
-app.use(express.json({ limit: '10kb' }));
-app.use(express.urlencoded({ extended: true, limit: '10kb' }));
+app.use(express.json({ limit: '8mb' }));
+app.use(express.urlencoded({ extended: true, limit: '8mb' }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 // Logging
 if (config.nodeEnv === 'development') {

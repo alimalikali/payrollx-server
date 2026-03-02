@@ -11,7 +11,13 @@ const departmentRoutes = require('./departments.routes');
 const payrollRoutes = require('./payroll.routes');
 const aiRoutes = require('./ai.routes');
 const settingsRoutes = require('./settings.routes');
+<<<<<<< HEAD
 const dashboardRoutes = require('./dashboard.routes');
+=======
+const userRoutes = require('./users.routes');
+const notificationsRoutes = require('./notifications.routes');
+const uploadsRoutes = require('./uploads.routes');
+>>>>>>> bdd7077 (Updated project files)
 
 // API Information endpoint
 router.get('/', (req, res) => {
@@ -31,7 +37,13 @@ router.get('/', (req, res) => {
         ai: '/api/v1/ai',
         chatbot: '/api/v1/chatbot',
         settings: '/api/v1/settings',
+<<<<<<< HEAD
         dashboard: '/api/v1/dashboard',
+=======
+        users: '/api/v1/users',
+        notifications: '/api/v1/notifications',
+        uploads: '/api/v1/uploads',
+>>>>>>> bdd7077 (Updated project files)
       },
     },
   });
@@ -46,6 +58,12 @@ router.use('/departments', departmentRoutes);
 router.use('/payroll', payrollRoutes);
 router.use('/ai', aiRoutes);
 router.use('/settings', settingsRoutes);
+<<<<<<< HEAD
 router.use('/dashboard', dashboardRoutes);
+=======
+router.use('/users', userRoutes);
+router.use('/notifications', notificationsRoutes);
+router.use('/uploads', uploadsRoutes);
+>>>>>>> bdd7077 (Updated project files)
 
 module.exports = router;

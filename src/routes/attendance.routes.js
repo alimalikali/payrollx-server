@@ -4,7 +4,7 @@
 
 const express = require('express');
 const attendanceController = require('../controllers/attendance.controller');
-const { protect, hrOrAdmin } = require('../middleware/auth');
+const { protect, hrOnly, ownerOrHR } = require('../middleware/auth');
 const { commonValidation, body, handleValidation } = require('../middleware/validate');
 
 const router = express.Router();
@@ -48,13 +48,21 @@ router.post('/check-in', attendanceValidation.checkIn, attendanceController.chec
 router.post('/check-out', attendanceValidation.checkOut, attendanceController.checkOut);
 
 // Stats endpoints
-router.get('/daily-stats', hrOrAdmin, attendanceController.getDailyStats);
-router.get('/summary/:employeeId', commonValidation.uuid('employeeId')[0], attendanceController.getEmployeeSummary);
+router.get('/daily-stats', hrOnly, attendanceController.getDailyStats);
+router.get('/summary/:employeeId', commonValidation.uuid('employeeId')[0], ownerOrHR('employeeId'), attendanceController.getEmployeeSummary);
 
+<<<<<<< HEAD
 // CRUD and admin operations
 router.get('/', attendanceController.getAttendance);
 router.get('/:id', commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
 router.post('/mark', hrOrAdmin, attendanceValidation.mark, attendanceController.markAttendance);
 router.post('/bulk', hrOrAdmin, attendanceValidation.bulk, attendanceController.bulkMark);
+=======
+// Attendance access and admin operations
+router.get('/', attendanceController.getAttendance);
+router.get('/:id', hrOnly, commonValidation.uuid('id')[0], attendanceController.getAttendanceById);
+router.post('/mark', hrOnly, attendanceValidation.mark, attendanceController.markAttendance);
+router.post('/bulk', hrOnly, attendanceValidation.bulk, attendanceController.bulkMark);
+>>>>>>> bdd7077 (Updated project files)
 
 module.exports = router;

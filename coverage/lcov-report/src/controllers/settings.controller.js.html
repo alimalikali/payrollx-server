@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/20</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">45% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/20</span>
+                <span class='fraction'>0/20</span>
             </div>
         
             
@@ -113,42 +113,42 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -159,42 +159,42 @@
  * Settings Controller
  */
 &nbsp;
-const settingsService = require('../services/settings.service');
-const { success } = require('../utils/apiResponse');
-const { asyncHandler } = require('../middleware/errorHandler');
+const settingsService = <span class="cstat-no" title="statement not covered" >require('../services/settings.service');</span>
+const { success } = <span class="cstat-no" title="statement not covered" >require('../utils/apiResponse');</span>
+const { asyncHandler } = <span class="cstat-no" title="statement not covered" >require('../middleware/errorHandler');</span>
 &nbsp;
-const getSettings = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const getSettings = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const settings = <span class="cstat-no" title="statement not covered" >await settingsService.getSettings();</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(settings));</span>
 });
 &nbsp;
-const updateSettings = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const updateSettings = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const settings = <span class="cstat-no" title="statement not covered" >await settingsService.updateSettings(req.body);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(settings, 'Settings updated successfully'));</span>
 });
 &nbsp;
-const getPublicHolidays = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const getPublicHolidays = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const { year } = <span class="cstat-no" title="statement not covered" >req.query;</span>
   const holidays = <span class="cstat-no" title="statement not covered" >await settingsService.getPublicHolidays(parseInt(year));</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(holidays));</span>
 });
 &nbsp;
-const addPublicHoliday = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const addPublicHoliday = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
   const holiday = <span class="cstat-no" title="statement not covered" >await settingsService.addPublicHoliday(req.body);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.status(201).json(success(holiday, 'Holiday added successfully'));</span>
 });
 &nbsp;
-const deletePublicHoliday = asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {
+const deletePublicHoliday = <span class="cstat-no" title="statement not covered" >asyncHandler(<span class="fstat-no" title="function not covered" >as</span>ync (req, res) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >  await settingsService.deletePublicHoliday(req.params.id);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  res.json(success(null, 'Holiday deleted successfully'));</span>
 });
 &nbsp;
-module.exports = {
+<span class="cstat-no" title="statement not covered" >module.exports = {</span>
   getSettings,
   updateSettings,
   getPublicHolidays,
@@ -208,7 +208,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-02-05T12:28:47.530Z
+                at 2026-02-26T21:19:16.407Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

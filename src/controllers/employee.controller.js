@@ -6,7 +6,11 @@
 const employeeService = require('../services/employee.service');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+<<<<<<< HEAD
 const { ForbiddenError } = require('../utils/errors');
+=======
+const { ForbiddenError, NotFoundError } = require('../utils/errors');
+>>>>>>> bdd7077 (Updated project files)
 
 /**
  * Get all employees
@@ -47,6 +51,29 @@ const getEmployee = asyncHandler(async (req, res) => {
   }
 
   const employee = await employeeService.getEmployeeByIdentifier(req.params.id);
+
+  if (req.user.role === 'employee') {
+    if (!req.user.employeeId) {
+      throw new NotFoundError('Employee profile not found');
+    }
+    if (employee.id !== req.user.employeeId) {
+      throw new ForbiddenError('You can only view your own profile');
+    }
+  }
+
+  res.json(success(employee));
+});
+
+/**
+ * Get current user's employee profile
+ * GET /api/v1/employees/me
+ */
+const getMyEmployee = asyncHandler(async (req, res) => {
+  if (!req.user.employeeId) {
+    throw new NotFoundError('Employee profile not found');
+  }
+
+  const employee = await employeeService.getEmployeeById(req.user.employeeId);
 
   res.json(success(employee));
 });
@@ -101,12 +128,39 @@ const getByDepartment = asyncHandler(async (req, res) => {
   res.json(success(data));
 });
 
+/**
+ * Get attendance and leave summary for employee
+ * GET /api/v1/employees/:id/attendance-leave-summary
+ */
+const getAttendanceLeaveSummary = asyncHandler(async (req, res) => {
+  const employee = await employeeService.getEmployeeByIdentifier(req.params.id);
+
+  if (req.user.role === 'employee') {
+    if (!req.user.employeeId) {
+      throw new NotFoundError('Employee profile not found');
+    }
+    if (employee.id !== req.user.employeeId) {
+      throw new ForbiddenError('You can only view your own profile summary');
+    }
+  }
+
+  const summary = await employeeService.getAttendanceLeaveSummary(employee.id, {
+    month: req.query.month ? parseInt(req.query.month, 10) : undefined,
+    year: req.query.year ? parseInt(req.query.year, 10) : undefined,
+    limit: req.query.limit ? parseInt(req.query.limit, 10) : undefined,
+  });
+
+  res.json(success(summary));
+});
+
 module.exports = {
   getEmployees,
   getEmployee,
+  getMyEmployee,
   createEmployee,
   updateEmployee,
   deleteEmployee,
   getStats,
   getByDepartment,
+  getAttendanceLeaveSummary,
 };

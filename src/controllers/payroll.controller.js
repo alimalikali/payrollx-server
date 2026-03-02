@@ -3,10 +3,14 @@
  */
 
 const payrollService = require('../services/payroll.service');
-const { calculateMonthlyTax, calculateAllDeductions, getTaxSlabInfo } = require('../utils/taxCalculator');
+const { calculateAllDeductions, getTaxSlabInfo } = require('../utils/taxCalculator');
 const { success } = require('../utils/apiResponse');
 const { asyncHandler } = require('../middleware/errorHandler');
+<<<<<<< HEAD
 const { ForbiddenError } = require('../utils/errors');
+=======
+const { BadRequestError, ForbiddenError } = require('../utils/errors');
+>>>>>>> bdd7077 (Updated project files)
 
 /**
  * Get all payroll runs
@@ -71,11 +75,29 @@ const approvePayroll = asyncHandler(async (req, res) => {
  */
 const getPayslips = asyncHandler(async (req, res) => {
   const { payrollRunId, employeeId, page, limit } = req.query;
+<<<<<<< HEAD
   const scopedEmployeeId = req.user.role === 'employee' ? req.user.employeeId : employeeId;
 
   const result = await payrollService.getPayslips({
     payrollRunId,
     employeeId: scopedEmployeeId,
+=======
+  let targetEmployeeId = employeeId;
+
+  if (req.user.role === 'employee') {
+    if (!req.user.employeeId) {
+      throw new BadRequestError('Employee profile not linked to this account');
+    }
+    if (employeeId && employeeId !== req.user.employeeId) {
+      throw new ForbiddenError('You can only view your own payslips');
+    }
+    targetEmployeeId = req.user.employeeId;
+  }
+
+  const result = await payrollService.getPayslips({
+    payrollRunId,
+    employeeId: targetEmployeeId,
+>>>>>>> bdd7077 (Updated project files)
     page: parseInt(page) || 1,
     limit: parseInt(limit) || 10,
   });
@@ -90,10 +112,43 @@ const getPayslip = asyncHandler(async (req, res) => {
   const payslip = await payrollService.getPayslipById(req.params.id);
 
   if (req.user.role === 'employee' && payslip.employeeId !== req.user.employeeId) {
+<<<<<<< HEAD
     throw new ForbiddenError('You do not have permission to access this payslip');
+=======
+    throw new ForbiddenError('You can only view your own payslip');
+>>>>>>> bdd7077 (Updated project files)
   }
 
   res.json(success(payslip));
+});
+
+/**
+ * Get salary history
+ */
+const getSalaryHistory = asyncHandler(async (req, res) => {
+  const { employeeId, months } = req.query;
+  let targetEmployeeId = employeeId;
+
+  if (req.user.role === 'employee') {
+    if (!req.user.employeeId) {
+      throw new BadRequestError('Employee profile not linked to this account');
+    }
+    if (employeeId && employeeId !== req.user.employeeId) {
+      throw new ForbiddenError('You can only view your own salary history');
+    }
+    targetEmployeeId = req.user.employeeId;
+  }
+
+  if (!targetEmployeeId) {
+    throw new BadRequestError('Employee ID is required');
+  }
+
+  const history = await payrollService.getSalaryHistory(
+    targetEmployeeId,
+    parseInt(months, 10) || 12
+  );
+
+  res.json(success(history));
 });
 
 /**
@@ -130,6 +185,7 @@ module.exports = {
   approvePayroll,
   getPayslips,
   getPayslip,
+  getSalaryHistory,
   calculateTax,
   getTaxSlabs,
 };

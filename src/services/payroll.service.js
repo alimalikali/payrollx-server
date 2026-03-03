@@ -260,32 +260,78 @@ const processPayroll = async (payrollRunId, processedBy) => {
  * Approve payroll run
  */
 const approvePayroll = async (payrollRunId, approvedBy) => {
-  const result = await db.query(
-    'SELECT status FROM payroll_runs WHERE id = $1',
-    [payrollRunId]
-  );
+  const client = await db.getClient();
 
-  if (result.rows.length === 0) {
-    throw new NotFoundError('Payroll run not found');
+  try {
+    await client.query('BEGIN');
+
+    const result = await client.query(
+      'SELECT status, month, year FROM payroll_runs WHERE id = $1',
+      [payrollRunId]
+    );
+
+    if (result.rows.length === 0) {
+      throw new NotFoundError('Payroll run not found');
+    }
+
+    if (result.rows[0].status !== 'completed') {
+      throw new BadRequestError('Only completed payroll runs can be approved');
+    }
+
+    await client.query(
+      `UPDATE payroll_runs SET status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP
+       WHERE id = $2`,
+      [approvedBy, payrollRunId]
+    );
+
+    await client.query(
+      `UPDATE payslips
+       SET status = $1, paid_at = CURRENT_TIMESTAMP
+       WHERE payroll_run_id = $2`,
+      ['paid', payrollRunId]
+    );
+
+    const employeeUsersResult = await client.query(
+      `SELECT e.user_id, p.id AS payslip_id
+       FROM payslips p
+       JOIN employees e ON e.id = p.employee_id
+       WHERE p.payroll_run_id = $1 AND e.user_id IS NOT NULL`,
+      [payrollRunId]
+    );
+    const salaryMonth = result.rows[0].month;
+    const salaryYear = result.rows[0].year;
+
+    if (employeeUsersResult.rows.length > 0) {
+      const values = [];
+      const placeholders = employeeUsersResult.rows.map((row, index) => {
+        const baseIndex = index * 6;
+        values.push(
+          row.user_id,
+          'salary_credited',
+          'Salary credited',
+          `Your salary for ${salaryMonth}/${salaryYear} has been credited.`,
+          'payslip',
+          row.payslip_id
+        );
+        return `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${baseIndex + 5}, $${baseIndex + 6})`;
+      });
+
+      await client.query(
+        `INSERT INTO notifications (user_id, type, title, message, entity_type, entity_id)
+         VALUES ${placeholders.join(', ')}`,
+        values
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return getPayrollRunById(payrollRunId);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
   }
-
-  if (result.rows[0].status !== 'completed') {
-    throw new BadRequestError('Only completed payroll runs can be approved');
-  }
-
-  await db.query(
-    `UPDATE payroll_runs SET status = 'approved', approved_by = $1, approved_at = CURRENT_TIMESTAMP
-     WHERE id = $2`,
-    [approvedBy, payrollRunId]
-  );
-
-  // Also approve all payslips
-  await db.query(
-    'UPDATE payslips SET status = $1 WHERE payroll_run_id = $2',
-    ['approved', payrollRunId]
-  );
-
-  return getPayrollRunById(payrollRunId);
 };
 
 /**

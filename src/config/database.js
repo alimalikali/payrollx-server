@@ -34,7 +34,9 @@ const ensureSchemaCompatibility = async () => {
               'leave_request_submitted',
               'leave_request_approved',
               'leave_request_rejected',
-              'leave_request_cancelled'
+              'leave_request_cancelled',
+              'salary_credited',
+              'company_notice'
             )
           ),
           title VARCHAR(255) NOT NULL,
@@ -60,6 +62,25 @@ const ensureSchemaCompatibility = async () => {
       await pool.query(`
         ALTER TABLE IF EXISTS notifications
         ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS notifications
+        DROP CONSTRAINT IF EXISTS notifications_type_check
+      `);
+
+      await pool.query(`
+        ALTER TABLE IF EXISTS notifications
+        ADD CONSTRAINT notifications_type_check CHECK (
+          type IN (
+            'leave_request_submitted',
+            'leave_request_approved',
+            'leave_request_rejected',
+            'leave_request_cancelled',
+            'salary_credited',
+            'company_notice'
+          )
+        )
       `);
 
       await pool.query(`

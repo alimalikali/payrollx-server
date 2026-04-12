@@ -510,7 +510,7 @@ const buildEmployeeInsights = ({ attendance, todayAttendance, leaveBalances, lat
       type: 'salary_snapshot',
       severity: 'info',
       title: 'Latest Salary Snapshot',
-      description: `Net salary for ${latestPayslip.month}/${latestPayslip.year}: PKR ${latestPayslip.netSalary.toLocaleString()}.`,
+      description: `Net salary for ${latestPayslip.month}/${latestPayslip.year}: PKR ${(parseFloat(latestPayslip.net_salary) || 0).toLocaleString()}.`,
     });
     actions.push({ type: 'view_payslip', label: 'View Payslips', path: '/employee/payslips' });
   }

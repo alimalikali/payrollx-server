@@ -15,6 +15,7 @@ const dashboardRoutes = require('./dashboard.routes');
 const userRoutes = require('./users.routes');
 const notificationsRoutes = require('./notifications.routes');
 const uploadsRoutes = require('./uploads.routes');
+const noticeRoutes = require('./notices.routes');
 
 // API Information endpoint
 router.get('/', (req, res) => {
@@ -38,6 +39,7 @@ router.get('/', (req, res) => {
         users: '/api/v1/users',
         notifications: '/api/v1/notifications',
         uploads: '/api/v1/uploads',
+        notices: '/api/v1/notices',
       },
     },
   });
@@ -56,5 +58,6 @@ router.use('/dashboard', dashboardRoutes);
 router.use('/users', userRoutes);
 router.use('/notifications', notificationsRoutes);
 router.use('/uploads', uploadsRoutes);
+router.use('/notices', noticeRoutes);
 
 module.exports = router;

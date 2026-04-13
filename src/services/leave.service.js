@@ -264,10 +264,12 @@ const createLeaveRequest = async ({
  */
 const approveLeaveRequest = async (id, approvedBy) => {
   const request = await db.query(
-    `SELECT lr.*, e.user_id, e.first_name, e.last_name, lt.name AS leave_type_name
+    `SELECT lr.*, e.user_id, e.first_name, e.last_name, lt.name AS leave_type_name,
+            u2.email AS employee_email
      FROM leave_requests lr
      JOIN employees e ON e.id = lr.employee_id
      JOIN leave_types lt ON lt.id = lr.leave_type_id
+     LEFT JOIN users u2 ON u2.id = e.user_id
      WHERE lr.id = $1`,
     [id]
   );
@@ -296,6 +298,14 @@ const approveLeaveRequest = async (id, approvedBy) => {
       message: `Your ${request.rows[0].leave_type_name} request has been approved.`,
       entityType: 'leave_request',
       entityId: id,
+      email: request.rows[0].employee_email,
+      emailTemplate: 'leaveApproved',
+      emailData: {
+        employeeName: employeeName || 'Employee',
+        leaveType: request.rows[0].leave_type_name,
+        startDate: request.rows[0].start_date,
+        endDate: request.rows[0].end_date,
+      },
     });
   }
 
@@ -315,10 +325,12 @@ const approveLeaveRequest = async (id, approvedBy) => {
  */
 const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
   const request = await db.query(
-    `SELECT lr.*, e.user_id, lt.name AS leave_type_name
+    `SELECT lr.*, e.user_id, e.first_name, e.last_name, lt.name AS leave_type_name,
+            u2.email AS employee_email
      FROM leave_requests lr
      JOIN employees e ON e.id = lr.employee_id
      JOIN leave_types lt ON lt.id = lr.leave_type_id
+     LEFT JOIN users u2 ON u2.id = e.user_id
      WHERE lr.id = $1`,
     [id]
   );
@@ -339,6 +351,7 @@ const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
   );
 
   if (request.rows[0].user_id) {
+    const employeeName = `${request.rows[0].first_name || ''} ${request.rows[0].last_name || ''}`.trim();
     await notificationService.createNotification({
       userId: request.rows[0].user_id,
       type: 'leave_request_rejected',
@@ -346,6 +359,13 @@ const rejectLeaveRequest = async (id, approvedBy, rejectionReason) => {
       message: `Your ${request.rows[0].leave_type_name} request was rejected.${rejectionReason ? ` Reason: ${rejectionReason}` : ''}`,
       entityType: 'leave_request',
       entityId: id,
+      email: request.rows[0].employee_email,
+      emailTemplate: 'leaveRejected',
+      emailData: {
+        employeeName: employeeName || 'Employee',
+        leaveType: request.rows[0].leave_type_name,
+        reason: rejectionReason,
+      },
     });
   }
 

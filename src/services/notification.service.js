@@ -1,5 +1,6 @@
 const db = require('../config/database');
 const { NotFoundError } = require('../utils/errors');
+const emailService = require('./email.service');
 
 const createNotification = async ({
   userId,
@@ -8,12 +9,35 @@ const createNotification = async ({
   message,
   entityType = null,
   entityId = null,
+  email = null,
+  emailTemplate = null,
+  emailData = null,
 }) => {
-  await db.query(
+  const result = await db.query(
     `INSERT INTO notifications (user_id, type, title, message, entity_type, entity_id)
-     VALUES ($1, $2, $3, $4, $5, $6)`,
+     VALUES ($1, $2, $3, $4, $5, $6)
+     RETURNING id`,
     [userId, type, title, message, entityType, entityId]
   );
+
+  if (email && emailTemplate) {
+    const notificationId = result.rows[0].id;
+    emailService.sendEmail({ to: email, template: emailTemplate, data: emailData || {} })
+      .then((sent) => {
+        if (sent) {
+          db.query(
+            `UPDATE notifications SET email_sent = true, email_sent_at = CURRENT_TIMESTAMP WHERE id = $1`,
+            [notificationId]
+          ).catch(() => {});
+        }
+      })
+      .catch((err) => {
+        db.query(
+          `UPDATE notifications SET email_error = $1 WHERE id = $2`,
+          [err.message, notificationId]
+        ).catch(() => {});
+      });
+  }
 };
 
 const createBulkNotifications = async (notifications) => {

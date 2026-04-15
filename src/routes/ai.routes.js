@@ -41,6 +41,7 @@ router.patch('/alerts/:id', hrOnly, commonValidation.uuid('id')[0], alertStatusV
 // Fraud Detection (HR only)
 router.post('/fraud-detection/run', hrOnly, aiController.runFraudDetection);
 router.get('/fraud-detection/stats', hrOnly, aiController.getFraudStats);
+router.get('/fraud-detection/employee-risk', hrOnly, aiController.getEmployeeRiskScores);
 
 // Salary Anomaly (HR only)
 router.post('/salary-anomaly/detect', hrOnly, aiController.detectSalaryAnomalies);

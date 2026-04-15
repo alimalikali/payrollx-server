@@ -28,6 +28,12 @@ const getFraudStats = asyncHandler(async (req, res) => {
   res.json(success(stats));
 });
 
+const getEmployeeRiskScores = asyncHandler(async (req, res) => {
+  const result = await fraudDetectionService.getEmployeeRiskScores();
+
+  res.json(success(result));
+});
+
 // Salary Anomaly
 
 const detectSalaryAnomalies = asyncHandler(async (req, res) => {
@@ -181,13 +187,15 @@ const updateAlertStatus = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { status, resolutionNotes } = req.body;
 
-  const query = status === 'resolved'
-    ? `UPDATE ai_alerts SET status = $1, resolved_by = $2, resolved_at = CURRENT_TIMESTAMP, resolution_notes = $3 WHERE id = $4 RETURNING *`
-    : `UPDATE ai_alerts SET status = $1 WHERE id = $2 RETURNING *`;
+  const isTerminal = ['resolved', 'dismissed'].includes(status);
 
-  const params = status === 'resolved'
-    ? [status, req.user.id, resolutionNotes, id]
-    : [status, id];
+  const query = isTerminal
+    ? `UPDATE ai_alerts SET status = $1, resolved_by = $2, resolved_at = CURRENT_TIMESTAMP, resolution_notes = $3 WHERE id = $4 RETURNING *`
+    : `UPDATE ai_alerts SET status = $1, resolution_notes = $2 WHERE id = $3 RETURNING *`;
+
+  const params = isTerminal
+    ? [status, req.user.id, resolutionNotes || null, id]
+    : [status, resolutionNotes || null, id];
 
   const result = await db.query(query, params);
 
@@ -195,7 +203,13 @@ const updateAlertStatus = asyncHandler(async (req, res) => {
     return res.status(404).json({ success: false, error: { message: 'Alert not found' } });
   }
 
-  res.json(success(result.rows[0], 'Alert status updated'));
+  res.json(success({
+    id: result.rows[0].id,
+    status: result.rows[0].status,
+    resolutionNotes: result.rows[0].resolution_notes,
+    resolvedAt: result.rows[0].resolved_at,
+    resolvedBy: result.rows[0].resolved_by,
+  }, 'Alert status updated'));
 });
 
 // Dashboard Stats
@@ -248,6 +262,7 @@ const getEmployeeInsights = asyncHandler(async (req, res) => {
 module.exports = {
   runFraudDetection,
   getFraudStats,
+  getEmployeeRiskScores,
   detectSalaryAnomalies,
   getSalaryDistribution,
   generateForecast,

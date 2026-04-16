@@ -93,6 +93,7 @@ const sendChatMessage = asyncHandler(async (req, res) => {
 
   const result = await chatbotService.processMessage({
     userId: req.user.id,
+    userRole: req.user.role,
     sessionId,
     message,
   });

@@ -33,7 +33,7 @@ const tryModel = async (model, messages, apiKey, signal) => {
     body: JSON.stringify({
       model,
       messages,
-      max_tokens: 300,
+      max_tokens: 600,
       temperature: 0.4,
     }),
     signal,

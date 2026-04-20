@@ -253,8 +253,11 @@ const getEmployeeInsights = asyncHandler(async (req, res) => {
 
   res.json(success({
     employeeId: req.user.employeeId,
+    profile: dashboard.profile,
+    today: dashboard.today,
     monthSummary: dashboard.monthSummary,
     leaveBalances: dashboard.leaveBalances,
+    pendingLeaves: dashboard.pendingLeaves,
     latestPayslip: dashboard.latestPayslip,
     aiInsights: dashboard.aiInsights,
   }));

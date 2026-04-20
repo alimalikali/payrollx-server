@@ -9,6 +9,8 @@
     "db:migrate": "node migrations/run-migrations.js",
     "db:seed": "node seeds/seed.js",
     "db:seed:fraud": "node seeds/fraud-test-seed.js",
+    "db:seed:all": "node seeds/seed.js && node seeds/comprehensive-seed.js && node seeds/fraud-test-seed.js",
+    "db:seed:comprehensive": "node seeds/comprehensive-seed.js",
     "test": "jest --coverage --forceExit",
     "test:watch": "jest --watch"
   },
